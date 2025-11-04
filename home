@@ -1,2 +1,56 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Website</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    .hero {
+      background-image: url('your-background-image-url-here');
+      background-size: cover;
+      background-position: center;
+      height: 70vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+    }
+    h1 {
+      font-size: 4rem;
+    }
+    .content {
+      padding: 20px;
+      text-align: center;
+    }
+    .button {
+      padding: 10px 20px;
+      text-decoration: none;
+      border: 1px solid #000;
+      border-radius: 5px;
+      display: inline-block;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <h1>My Big Title</h1>
+  </div>
+
+  <div class="content">
+    <h2>Map</h2>
+    <!-- MAP WILL GO HERE -->
+    <div id="map">Map goes here when you send it</div>
+
+    <h2>Weather Link</h2>
+    <a href="https://weather.com" target="_blank">Go to Weather Website</a>
+    <a href="https://weather.com" target="_blank" class="button">Weather Button</a>
+  </div>
+</body>
 </html>
