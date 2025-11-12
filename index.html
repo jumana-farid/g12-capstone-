@@ -10,8 +10,11 @@
       padding: 0;
       font-family: 'Comic Sans MS', 'Fredoka One', Arial, sans-serif; /* fun Scooby style */
     }
+
+    /* HERO SECTION */
     .hero {
-      background-image: url('https://upload.wikimedia.org/wikipedia/en/3/3a/The_Mystery_Machine.png'); /* Scooby-Doo Mystery Machine */
+      position: relative;
+      background-image: url('hero-background.jpg'); /* your uploaded image */
       background-size: cover;
       background-position: center;
       height: 70vh;
@@ -21,9 +24,24 @@
       color: #fff200; /* Scooby yellow text */
       text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
     }
-    h1 {
-      font-size: 4rem;
+
+    /* Dark overlay to make text readable */
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.3);
+      z-index: 0;
     }
+
+    .hero h1 {
+      position: relative;
+      font-size: 4rem;
+      z-index: 1;
+    }
+
     .content {
       padding: 20px;
       text-align: center;
@@ -32,6 +50,7 @@
       border-top:8px solid #ff7f00; /* orange strip like van */
       border-bottom:8px solid #ff7f00;
     }
+
     .button {
       padding: 10px 20px;
       text-decoration: none;
@@ -43,6 +62,7 @@
   </style>
 </head>
 <body>
+  <!-- HERO SECTION -->
   <div class="hero">
     <h1>Mystery Machine Dashboard</h1>
   </div>
@@ -61,7 +81,6 @@
     </div>
 
     <h2>Map</h2>
-    <!-- MAP WILL GO HERE -->
     <div id="map" style="height: 400px;"></div>
 
     <!-- Leaflet CSS -->
@@ -82,7 +101,7 @@
       </div>
     </div>
 
-    <!-- Weather Button -->
+    <!-- Weather & Earthquake Buttons -->
     <div style="margin-top:20px;">
       <a href="https://weather.com" target="_blank" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; background:#ff7f00; color:white; font-weight:bold;">Go to Weather Website</a>
       <a href="#" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; margin-left:10px; background:#ff7f00; color:white; font-weight:bold;">Expected Earthquakes</a>
@@ -99,8 +118,6 @@
       L.circle([30.043, 31.237], {radius: 200, color: "red"}).addTo(map).bindPopup("Congested");
       L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(map).bindPopup("Free");
     </script>
-
-    
   </div>
 </body>
 </html>
