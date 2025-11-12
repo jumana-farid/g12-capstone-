@@ -14,27 +14,25 @@
     /* HERO SECTION */
     .hero {
       position: relative;
+      background-image: url('hero-background.jpg'); /* your uploaded image */
+      background-size: cover;
+      background-position: center;
       height: 70vh;
       display: flex;
       justify-content: center;
       align-items: center;
       color: #fff200; /* Scooby yellow text */
       text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
-      overflow: hidden;
     }
 
-    /* Rotated background */
+    /* Dark overlay to make text readable */
     .hero::before {
       content: "";
       position: absolute;
-      top: 50%;
-      left: 50%;
+      top: 0; left: 0;
       width: 100%;
       height: 100%;
-      background-image: url('hero-background.jpg'); /* your uploaded image */
-      background-size: cover;
-      background-position: center;
-      transform: translate(-50%, -50%) rotate(90deg); /* rotate 90 degrees clockwise */
+      background: rgba(0,0,0,0.3);
       z-index: 0;
     }
 
