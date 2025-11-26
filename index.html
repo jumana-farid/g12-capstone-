@@ -15,9 +15,6 @@
     /* -------------------- HERO SECTION -------------------- */
     .hero {
       position: relative;
-      background-image: url('Triangular Object with Yellow Accents.png'); /* your prototype road */
-      background-size: cover;
-      background-position: center;
       height: 70vh;
       display: flex;
       justify-content: center;
@@ -27,23 +24,19 @@
       overflow: hidden;
     }
 
-    /* Dark overlay for readability */
-    .hero::before {
-      content: "";
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background-image: url('Triangular Object with Yellow Accents.png'); /* same image */
-      background-size: cover;
-      background-position: center;
-      opacity: 0.4; /* dim the image */
-      z-index: 0;
-    }
-
     .hero h1 {
       position: relative;
       font-size: 4rem;
+      z-index: 2;
+    }
+
+    /* Canvas for JS triangle image */
+    #tri-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       z-index: 1;
     }
 
@@ -56,7 +49,6 @@
       border-top:8px solid #ff7f00;
       border-bottom:8px solid #ff7f00;
     }
-
   </style>
 
   <!-- Leaflet CSS -->
@@ -68,6 +60,7 @@
   <!-- HERO SECTION -->
   <div class="hero">
     <h1>Mystery Machine Dashboard</h1>
+    <canvas id="tri-canvas"></canvas>
   </div>
 
   <!-- MAIN CONTENT -->
@@ -88,21 +81,26 @@
     <h2>Map</h2>
     <div id="map" style="height: 400px;"></div>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <script>
-      var map = L.map('map').setView([30.0444, 31.2357], 14);
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
-
-      L.marker([30.0444, 31.2357]).addTo(map).bindPopup("Center");
-      L.circle([30.043, 31.237], {radius: 200, color: "red"}).addTo(map).bindPopup("Congested");
-      L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(map).bindPopup("Free");
-    </script>
-
   </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // ---------------- Map Setup ----------------
+    const map = L.map('map').setView([30.0444, 31.2357], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    L.marker([30.0444, 31.2357]).addTo(map).bindPopup("Center");
+    L.circle([30.043, 31.237], {radius: 200, color: "red"}).addTo(map).bindPopup("Congested");
+    L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(map).bindPopup("Free");
+  </script>
+
+  <!-- JS for Triangle Banner -->
+  <script src="triangle.js"></script>
+
 </body>
 </html>
