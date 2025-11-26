@@ -3,36 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Website</title>
+  <title>Mystery Machine Dashboard</title>
+
   <style>
     body, html {
       margin: 0;
       padding: 0;
-      font-family: 'Comic Sans MS', 'Fredoka One', Arial, sans-serif; /* fun Scooby style */
+      font-family: 'Comic Sans MS', 'Fredoka One', Arial, sans-serif;
     }
 
-    /* HERO SECTION */
+    /* -------------------- HERO SECTION -------------------- */
     .hero {
       position: relative;
-      background-image: url('hero-background.jpg'); /* your uploaded image */
+      background-image: url('Triangular Object with Yellow Accents.png'); /* your prototype road */
       background-size: cover;
       background-position: center;
       height: 70vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      color: #fff200; /* Scooby yellow text */
+      color: #fff200;
       text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+      overflow: hidden;
     }
 
-    /* Dark overlay to make text readable */
+    /* Dark overlay for readability */
     .hero::before {
       content: "";
       position: absolute;
       top: 0; left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.3);
+      background-image: url('Triangular Object with Yellow Accents.png'); /* same image */
+      background-size: cover;
+      background-position: center;
+      opacity: 0.4; /* dim the image */
       z-index: 0;
     }
 
@@ -42,32 +47,32 @@
       z-index: 1;
     }
 
+    /* -------------------- CONTENT SECTION -------------------- */
     .content {
       padding: 20px;
       text-align: center;
-      background:#1cb5ac; /* Mystery Machine teal */
+      background:#1cb5ac;
       color:white;
-      border-top:8px solid #ff7f00; /* orange strip like van */
+      border-top:8px solid #ff7f00;
       border-bottom:8px solid #ff7f00;
     }
 
-    .button {
-      padding: 10px 20px;
-      text-decoration: none;
-      border: 1px solid #000;
-      border-radius: 5px;
-      display: inline-block;
-      margin-left: 10px;
-    }
   </style>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
+
 <body>
+
   <!-- HERO SECTION -->
   <div class="hero">
     <h1>Mystery Machine Dashboard</h1>
   </div>
 
+  <!-- MAIN CONTENT -->
   <div class="content">
+    
     <h2>Map Status</h2>
     <div style="display:flex; justify-content:center; gap:20px; margin-bottom:15px;">
       <div style="display:flex; align-items:center; gap:5px;">
@@ -83,29 +88,8 @@
     <h2>Map</h2>
     <div id="map" style="height: 400px;"></div>
 
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <h2>Green Lane Status</h2>
-    <div style="display:flex; justify-content:center; gap:20px; margin:15px 0;">
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:black; border-radius:50%;"></div>
-        <span>Closed</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:green; border-radius:50%;"></div>
-        <span>Open</span>
-      </div>
-    </div>
-
-    <!-- Weather & Earthquake Buttons -->
-    <div style="margin-top:20px;">
-      <a href="https://weather.com" target="_blank" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; background:#ff7f00; color:white; font-weight:bold;">Go to Weather Website</a>
-      <a href="#" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; margin-left:10px; background:#ff7f00; color:white; font-weight:bold;">Expected Earthquakes</a>
-    </div>
 
     <script>
       var map = L.map('map').setView([30.0444, 31.2357], 14);
@@ -118,6 +102,7 @@
       L.circle([30.043, 31.237], {radius: 200, color: "red"}).addTo(map).bindPopup("Congested");
       L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(map).bindPopup("Free");
     </script>
+
   </div>
 </body>
 </html>
