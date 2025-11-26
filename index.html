@@ -10,62 +10,87 @@
       margin: 0;
       padding: 0;
       font-family: 'Comic Sans MS', 'Fredoka One', Arial, sans-serif;
+      height: 100%;
     }
 
-    /* -------------------- HERO SECTION -------------------- */
+    /* HERO SECTION - now just title, no image */
     .hero {
       position: relative;
-      height: 70vh;
+      height: 10vh;
       display: flex;
       justify-content: center;
       align-items: center;
       color: #fff200;
       text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
-      overflow: hidden;
+      background:#000; /* dark background behind title */
     }
 
     .hero h1 {
       position: relative;
-      font-size: 4rem;
+      font-size: 3rem;
       z-index: 2;
     }
 
-    /* Canvas for JS triangle image */
+    /* MAP CONTAINER */
+    #map-container {
+      position: relative;
+      width: 100%;
+      height: 70vh; /* map takes majority of screen */
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
     #tri-canvas {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      z-index: 1;
+      z-index: 2; /* on top of map for overlays */
+      pointer-events: none; /* lets map remain interactive */
     }
 
-    /* -------------------- CONTENT SECTION -------------------- */
     .content {
       padding: 20px;
       text-align: center;
-      background:#1cb5ac;
+      background:#1cb5ac; 
       color:white;
       border-top:8px solid #ff7f00;
       border-bottom:8px solid #ff7f00;
+    }
+
+    .button {
+      padding: 10px 20px;
+      text-decoration: none;
+      border: 1px solid #000;
+      border-radius: 5px;
+      display: inline-block;
+      margin-left: 10px;
     }
   </style>
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
-
 <body>
 
   <!-- HERO SECTION -->
   <div class="hero">
     <h1>Mystery Machine Dashboard</h1>
+  </div>
+
+  <!-- MAP SECTION -->
+  <div id="map-container">
+    <div id="map"></div>
     <canvas id="tri-canvas"></canvas>
   </div>
 
-  <!-- MAIN CONTENT -->
+  <!-- CONTENT SECTION -->
   <div class="content">
-    
     <h2>Map Status</h2>
     <div style="display:flex; justify-content:center; gap:20px; margin-bottom:15px;">
       <div style="display:flex; align-items:center; gap:5px;">
@@ -78,16 +103,28 @@
       </div>
     </div>
 
-    <h2>Map</h2>
-    <div id="map" style="height: 400px;"></div>
+    <h2>Green Lane Status</h2>
+    <div style="display:flex; justify-content:center; gap:20px; margin:15px 0;">
+      <div style="display:flex; align-items:center; gap:5px;">
+        <div style="width:12px; height:12px; background:black; border-radius:50%;"></div>
+        <span>Closed</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:5px;">
+        <div style="width:12px; height:12px; background:green; border-radius:50%;"></div>
+        <span>Open</span>
+      </div>
+    </div>
 
+    <!-- Buttons -->
+    <div style="margin-top:20px;">
+      <a href="https://weather.com" target="_blank" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; background:#ff7f00; color:white; font-weight:bold;">Go to Weather Website</a>
+      <a href="#" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; margin-left:10px; background:#ff7f00; color:white; font-weight:bold;">Expected Earthquakes</a>
+    </div>
   </div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <script>
-    // ---------------- Map Setup ----------------
     const map = L.map('map').setView([30.0444, 31.2357], 14);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -99,7 +136,7 @@
     L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(map).bindPopup("Free");
   </script>
 
-  <!-- JS for Triangle Banner -->
+  <!-- Triangle overlay JS -->
   <script src="triangle.js"></script>
 
 </body>
