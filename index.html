@@ -49,18 +49,19 @@
       margin-left: 10px;
     }
 
-    /* Map Styles – full image with exact dimensions */
+    /* Map container */
     #map {
       width: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
+      margin-bottom: 20px;
     }
 
     #map img {
-      width: 100%;
-      height: auto; /* keep original proportions */
       display: block;
+      max-width: 100%; /* scales down on smaller screens */
+      height: auto;    /* keeps original proportions */
     }
   </style>
 </head>
@@ -86,7 +87,7 @@
 
     <h2>Map</h2>
 
-    <!-- Full image map with exact dimensions -->
+    <!-- Full image map, responsive -->
     <div id="map">
       <img src="Triangular_Object_with_Yellow_Accents-removebg-preview.png" alt="Uploaded Map Photo">
     </div>
