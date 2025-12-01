@@ -22,8 +22,8 @@
       color: #fff200;
       text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
       overflow: hidden;
-      background: url('hero-background.jpg') no-repeat center center; /* hero image */
-      background-size: cover; /* fills hero area */
+      background: url('hero-background.jpg') no-repeat center center;
+      background-size: cover;
     }
 
     .hero h1 {
@@ -41,16 +41,7 @@
       border-bottom:8px solid #ff7f00;
     }
 
-    .button {
-      padding: 10px 20px;
-      text-decoration: none;
-      border: 1px solid #000;
-      border-radius: 5px;
-      display: inline-block;
-      margin-left: 10px;
-    }
-
-    /* Map container */
+    /* Existing image map */
     #map {
       width: 100%;
       display: flex;
@@ -61,10 +52,22 @@
 
     #map img {
       display: block;
-      max-width: 100%; /* scales down on smaller screens */
-      height: auto;    /* keeps original proportions */
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* NEW live map box */
+    #liveMap {
+      width: 100%;
+      height: 400px;
+      margin-top: 20px;
+      border: 4px solid #ff7f00;
+      border-radius: 10px;
     }
   </style>
+
+  <!-- Leaflet CSS (for live interactive map) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
 
@@ -88,10 +91,14 @@
 
     <h2>Map</h2>
 
-    <!-- Full image map, responsive -->
+    <!-- Your EXACT image map -->
     <div id="map">
       <img src="Triangular_Object_with_Yellow_Accents-removebg-preview.png" alt="Uploaded Map Photo">
     </div>
+
+    <!-- NEW: LIVE INTERACTIVE MAP -->
+    <h2>Live Map</h2>
+    <div id="liveMap"></div>
 
     <h2>Green Lane Status</h2>
     <div style="display:flex; justify-content:center; gap:20px; margin:15px 0;">
@@ -105,12 +112,6 @@
       </div>
     </div>
 
-    <!-- Weather & Earthquake Buttons -->
     <div style="margin-top:20px;">
       <a href="https://weather.com" target="_blank" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; background:#ff7f00; color:white; font-weight:bold;">Go to Weather Website</a>
-      <a href="#" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; margin-left:10px; background:#ff7f00; color:white; font-weight:bold;">Expected Earthquakes</a>
-    </div>
-
-  </div>
-</body>
-</html>
+      <a href="#" style="padding:15px 30px; fon
