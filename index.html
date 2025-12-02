@@ -3,107 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mystery Machine Dashboard</title>
-
+  <title>AI Model</title>
   <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      font-family: 'Comic Sans MS', 'Fredoka One', Arial, sans-serif;
-      height: 100%;
-    }
-
-    .hero {
-      position: relative;
-      height: 70vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #fff200;
-      text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
-      overflow: hidden;
-      background: url('hero-background.jpg') no-repeat center center;
-      background-size: cover;
-    }
-
-    .hero h1 {
-      position: relative;
-      font-size: 4rem;
-      z-index: 1;
-    }
-
-    .content {
-      padding: 20px;
-      text-align: center;
+    body { 
+      font-family: 'Comic Sans MS', Arial, sans-serif; 
+      text-align:center; 
       background:#1cb5ac; 
-      color:white;
-      border-top:8px solid #ff7f00;
-      border-bottom:8px solid #ff7f00;
+      color:white; 
+      padding:50px;
     }
-
-    #map img {
-      display: block;
-      max-width: 100%;
-      height: auto;
-      margin-bottom: 20px;
+    a { 
+      display:inline-block; margin-top:20px; padding:10px 20px; 
+      background:#ff7f00; color:white; font-weight:bold; text-decoration:none; border-radius:8px;
     }
-
-    #liveMap {
-      width: 100%;
-      height: 400px;
-      margin-top: 20px;
-      border: 4px solid #ff7f00;
-      border-radius: 10px;
-    }
-
     #ai-container {
-      margin-top: 20px;
-      display: none;
-      color: #000;
-      background: rgba(255,255,255,0.9);
-      padding: 15px;
-      border: 2px solid #ff7f00;
+      margin-top: 30px;
+      border: 3px solid #ff7f00;
+      padding: 20px;
       border-radius: 10px;
-      text-align: left;
-    }
-
-    a, button {
-      padding:15px 30px;
-      font-size:1.2rem;
-      border-radius:8px;
-      font-weight:bold;
-      text-decoration:none;
-      cursor:pointer;
-    }
-
-    a {
-      background:#ff7f00;
-      color:white;
-      border:2px solid orange;
-      display:inline-block;
-      margin-right:10px;
-    }
-
-    button {
-      background:#ff7f00;
-      color:white;
-      border:2px solid orange;
-      margin-left:10px;
-    }
-
-    .lane-bar {
-      height: 16px;
-      border-radius: 8px;
-      transition: width 0.5s;
-    }
-
-    .lane-box {
-      margin-bottom: 10px;
+      background: rgba(0,0,0,0.1);
     }
   </style>
-
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <!-- React + ReactDOM -->
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
@@ -111,156 +31,13 @@
 
   <!-- Babel for JSX -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <!-- Recharts -->
-  <script src="https://cdn.jsdelivr.net/npm/recharts/umd/Recharts.min.js"></script>
 </head>
 <body>
+  <h1>AI Model Page</h1>
+  <div id="ai-container"></div>
+  <a href="index.html">Back to Dashboard</a>
 
-  <div class="hero">
-    <h1>Mystery Machine Dashboard</h1>
-  </div>
-
-  <div class="content">
-    <h2>Map Status</h2>
-    <div style="display:flex; justify-content:center; gap:20px; margin-bottom:15px;">
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:red; border-radius:50%;"></div>
-        <span>Congested right now</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:orange; border-radius:50%;"></div>
-        <span>Most likely to congest</span>
-      </div>
-    </div>
-
-    <h2>Map</h2>
-    <div id="map">
-      <img src="Triangular_Object_with_Yellow_Accents-removebg-preview.png" alt="Uploaded Map Photo">
-    </div>
-
-    <h2>Live Map</h2>
-    <div id="liveMap"></div>
-
-    <h2>Green Lane Status</h2>
-    <div style="display:flex; justify-content:center; gap:20px; margin:15px 0;">
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:black; border-radius:50%;"></div>
-        <span>Closed</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:green; border-radius:50%;"></div>
-        <span>Open</span>
-      </div>
-    </div>
-
-    <!-- Buttons -->
-    <div style="margin-top:20px;">
-      <a href="https://weather.com" target="_blank">Go to Weather Website</a>
-      <a href="#">Expected Earthquakes</a>
-      <button id="show-ai">AI</button>
-    </div>
-
-    <!-- AI container -->
-    <div id="ai-container"></div>
-  </div>
-
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    var liveMap = L.map('liveMap').setView([30.0444, 31.2357], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(liveMap);
-    L.marker([30.0444, 31.2357]).addTo(liveMap).bindPopup("Center");
-    L.circle([30.043, 31.237], {radius: 200, color: "red"}).addTo(liveMap).bindPopup("Congested");
-    L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(liveMap).bindPopup("Free");
-  </script>
-
-  <!-- Minimal inline TrafficPredictor -->
-  <script type="text/babel">
-    const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
-
-    function TrafficPredictor() {
-      const [sensorData, setSensorData] = React.useState([0,0,0]);
-      const [historicalData, setHistoricalData] = React.useState([]);
-      const [isSimulating, setIsSimulating] = React.useState(false);
-      const intervalRef = React.useRef(null);
-      const LANES = ['Lane 1 (Left)', 'Lane 2 (Center)', 'Lane 3 (Right)'];
-
-      const generateLaneReading = (time,laneIndex)=>{
-        const hour = time%24;
-        let base = 0.3;
-        if(laneIndex===0 && hour>=7 && hour<=9) base=0.75;
-        else if(laneIndex===1) base=(hour>=7 && hour<=19?0.7:0.4);
-        else if(laneIndex===2 && hour>=17 && hour<=19) base=0.8;
-        const noise = (Math.random()-0.5)*0.15;
-        return Math.max(0, Math.min(1, base+noise));
-      };
-
-      const simulateSensorData = ()=>{
-        const hour = new Date().getHours()+Math.random()*0.5;
-        const newReading=[
-          generateLaneReading(hour,0),
-          generateLaneReading(hour,1),
-          generateLaneReading(hour,2)
-        ];
-        setSensorData(newReading);
-        setHistoricalData(prev=>[
-          ...prev.slice(-15),
-          {time:new Date().toLocaleTimeString(), lane1:(newReading[0]*100).toFixed(1), lane2:(newReading[1]*100).toFixed(1), lane3:(newReading[2]*100).toFixed(1)}
-        ]);
-      };
-
-      const toggleSimulation = ()=>{
-        if(isSimulating){ clearInterval(intervalRef.current); intervalRef.current=null; setIsSimulating(false);}
-        else{ setIsSimulating(true); simulateSensorData(); intervalRef.current=setInterval(simulateSensorData,2500);}
-      };
-
-      React.useEffect(()=>{ return ()=>{if(intervalRef.current) clearInterval(intervalRef.current);} }, []);
-
-      return (
-        <div>
-          <button onClick={toggleSimulation} style={{marginBottom:'10px', padding:'8px', fontWeight:'bold'}}>
-            {isSimulating?'Stop Simulation':'Start Simulation'}
-          </button>
-          <div className="lane-box">
-            {LANES.map((lane,idx)=>(
-              <div key={idx}>
-                <strong>{lane}:</strong> {(sensorData[idx]*100).toFixed(0)}%
-                <div style={{background:'#ddd', height:'12px', borderRadius:'6px', margin:'3px 0'}}>
-                  <div className="lane-bar" style={{width:`${sensorData[idx]*100}%`, background:idx===0?'red':idx===1?'orange':'yellow'}}></div>
-                </div>
-              </div>
-            ))}
-          </div>
-          {historicalData.length>0 && (
-            <div style={{height:'200px'}}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={historicalData}>
-                  <CartesianGrid strokeDasharray="3 3"/>
-                  <XAxis dataKey="time"/>
-                  <YAxis/>
-                  <Tooltip/>
-                  <Legend/>
-                  <Line type="monotone" dataKey="lane1" stroke="red"/>
-                  <Line type="monotone" dataKey="lane2" stroke="orange"/>
-                  <Line type="monotone" dataKey="lane3" stroke="yellow"/>
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    const aiContainer = document.getElementById("ai-container");
-    document.getElementById("show-ai").onclick=function(){
-      aiContainer.style.display='block';
-      ReactDOM.createRoot(aiContainer).render(<TrafficPredictor />);
-      aiContainer.scrollIntoView({behavior:'smooth'});
-    };
-  </script>
-
+  <!-- Your JSX code -->
+  <script type="text/babel" src="trafficPredictor.jsx"></script>
 </body>
 </html>
