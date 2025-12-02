@@ -1,29 +1,10 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Model</title>
-  <style>
-    body { 
-      font-family: 'Comic Sans MS', Arial, sans-serif; 
-      text-align:center; 
-      background:#1cb5ac; 
-      color:white; 
-      padding:50px;
-    }
-    a { 
-      display:inline-block; margin-top:20px; padding:10px 20px; 
-      background:#ff7f00; color:white; font-weight:bold; text-decoration:none; border-radius:8px;
-    }
-    #ai-container {
-      margin-top: 30px;
-      border: 3px solid #ff7f00;
-      padding: 20px;
-      border-radius: 10px;
-      background: rgba(0,0,0,0.1);
-    }
-  </style>
+  <title>Traffic Predictor</title>
 
   <!-- React + ReactDOM -->
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
@@ -31,13 +12,138 @@
 
   <!-- Babel for JSX -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #7bcdd5; }
+    .container { max-width: 900px; margin: auto; }
+    .card { background-color: #c3d871; padding: 20px; margin-bottom: 20px; border-radius: 10px; }
+    .lane-card { background-color: #f7fadb; padding: 10px; margin: 5px; border-radius: 8px; text-align: center; }
+    .progress-bar { height: 20px; border-radius: 10px; background-color: gray; margin-top: 5px; }
+    .progress { height: 100%; border-radius: 10px; background-color: red; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    table, th, td { border: 1px solid #999; }
+    th, td { padding: 5px; text-align: center; }
+  </style>
 </head>
 <body>
-  <h1>AI Model Page</h1>
-  <div id="ai-container"></div>
-  <a href="index.html">Back to Dashboard</a>
+  <div class="container">
+    <h1 style="text-align:center;">Static Traffic Lane Monitor</h1>
+    <div id="traffic-root"></div>
+  </div>
 
-  <!-- Your JSX code -->
-  <script type="text/babel" src="trafficPredictor.jsx"></script>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    function TrafficPredictor() {
+      const [sensorData, setSensorData] = useState([0,0,0]);
+      const [historicalData, setHistoricalData] = useState([]);
+      const [isSimulating, setIsSimulating] = useState(false);
+      const intervalRef = useRef(null);
+
+      const LANES = ['Lane 1 (Left)', 'Lane 2 (Center)', 'Lane 3 (Right)'];
+
+      const generateLaneReading = (time, laneIndex) => {
+        const hour = time % 24;
+        let baseOccupancy = 0.3;
+        if (laneIndex === 0 && hour >= 7 && hour <= 9) baseOccupancy = 0.75;
+        else if (laneIndex === 1) baseOccupancy = hour >= 7 && hour <= 19 ? 0.7 : 0.4;
+        else if (laneIndex === 2 && hour >= 17 && hour <= 19) baseOccupancy = 0.8;
+        const noise = (Math.random() - 0.5) * 0.15;
+        return Math.max(0, Math.min(1, baseOccupancy + noise));
+      };
+
+      const simulateSensorData = () => {
+        const currentHour = new Date().getHours() + Math.random() * 0.5;
+        const newReading = [
+          generateLaneReading(currentHour, 0),
+          generateLaneReading(currentHour, 1),
+          generateLaneReading(currentHour, 2)
+        ];
+        setSensorData(newReading);
+        setHistoricalData(prev => [
+          ...prev.slice(-10),
+          {
+            time: new Date().toLocaleTimeString(),
+            lane1: (newReading[0]*100).toFixed(1),
+            lane2: (newReading[1]*100).toFixed(1),
+            lane3: (newReading[2]*100).toFixed(1)
+          }
+        ]);
+      };
+
+      const toggleSimulation = () => {
+        if (isSimulating) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          setIsSimulating(false);
+        } else {
+          setIsSimulating(true);
+          simulateSensorData();
+          intervalRef.current = setInterval(simulateSensorData, 2500);
+        }
+      };
+
+      useEffect(() => {
+        return () => {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+      }, []);
+
+      return (
+        <div>
+          <div className="card">
+            <h2>Simulation Control</h2>
+            <button onClick={toggleSimulation} style={{padding: "10px 20px", fontSize: "16px"}}>
+              {isSimulating ? 'Stop Simulation' : 'Start Live Simulation'}
+            </button>
+          </div>
+
+          <div className="card">
+            <h2>Live Lane Occupancy</h2>
+            <div style={{display:"flex", justifyContent:"space-around"}}>
+              {LANES.map((lane, idx) => (
+                <div key={idx} className="lane-card">
+                  <h4>{lane}</h4>
+                  <p style={{fontSize:"24px", fontWeight:"bold"}}>{(sensorData[idx]*100).toFixed(0)}%</p>
+                  <div className="progress-bar">
+                    <div className="progress" style={{width: `${sensorData[idx]*100}%`}}></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {historicalData.length > 0 && (
+            <div className="card">
+              <h2>Historical Data</h2>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Lane 1</th>
+                    <th>Lane 2</th>
+                    <th>Lane 3</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historicalData.map((row, idx) => (
+                    <tr key={idx}>
+                      <td>{row.time}</td>
+                      <td>{row.lane1}%</td>
+                      <td>{row.lane2}%</td>
+                      <td>{row.lane3}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('traffic-root'))
+      .render(<TrafficPredictor />);
+  </script>
 </body>
 </html>
