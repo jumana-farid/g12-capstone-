@@ -41,18 +41,11 @@
       border-bottom:8px solid #ff7f00;
     }
 
-    #map {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
     #map img {
       display: block;
       max-width: 100%;
       height: auto;
+      margin-bottom: 20px;
     }
 
     #liveMap {
@@ -65,12 +58,40 @@
 
     #ai-container {
       margin-top: 30px;
-      border: 3px solid #ff7f00;
       padding: 20px;
-      border-radius: 10px;
-      background: rgba(0,0,0,0.1);
       display: none;
     }
+
+    a, button {
+      padding:15px 30px;
+      font-size:1.2rem;
+      border-radius:8px;
+      font-weight:bold;
+      text-decoration:none;
+      cursor:pointer;
+    }
+
+    a {
+      background:#ff7f00;
+      color:white;
+      border:2px solid orange;
+      display:inline-block;
+      margin-right:10px;
+    }
+
+    button {
+      background:#ff7f00;
+      color:white;
+      border:2px solid orange;
+      margin-left:10px;
+    }
+
+    .lane-bar {
+      height: 16px;
+      border-radius: 8px;
+      transition: width 0.5s;
+    }
+
   </style>
 
   <!-- Leaflet CSS -->
@@ -82,10 +103,15 @@
 
   <!-- Babel for JSX -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Recharts -->
+  <script src="https://cdn.jsdelivr.net/npm/recharts/umd/Recharts.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/lucide/dist/lucide.min.js"></script>
 </head>
 <body>
 
-  <!-- HERO SECTION -->
   <div class="hero">
     <h1>Mystery Machine Dashboard</h1>
   </div>
@@ -125,23 +151,18 @@
 
     <!-- Buttons -->
     <div style="margin-top:20px;">
-      <a href="https://weather.com" target="_blank" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; background:#ff7f00; color:white; font-weight:bold;">Go to Weather Website</a>
-      
-      <a href="#" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; margin-left:10px; background:#ff7f00; color:white; font-weight:bold;">Expected Earthquakes</a>
-      
-      <button id="show-ai" style="padding:15px 30px; font-size:1.2rem; border:2px solid orange; border-radius:8px; margin-left:10px; background:#ff7f00; color:white; font-weight:bold; cursor:pointer;">AI</button>
+      <a href="https://weather.com" target="_blank">Go to Weather Website</a>
+      <a href="#">Expected Earthquakes</a>
+      <button id="show-ai">AI</button>
     </div>
 
-    <!-- Container for AI React component -->
+    <!-- AI container -->
     <div id="ai-container"></div>
-
   </div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <script>
-    // LIVE MAP
     var liveMap = L.map('liveMap').setView([30.0444, 31.2357], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
@@ -151,28 +172,113 @@
     L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(liveMap).bindPopup("Free");
   </script>
 
-  <!-- AI React Component -->
+  <!-- Inline TrafficPredictor -->
   <script type="text/babel">
+    const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
+    const { Activity, TrendingUp, Car } = lucide;
+
     function TrafficPredictor() {
-      const [message, setMessage] = React.useState("Predicting traffic...");
+      const [sensorData, setSensorData] = React.useState([0,0,0]);
+      const [historicalData, setHistoricalData] = React.useState([]);
+      const [isSimulating, setIsSimulating] = React.useState(false);
+      const intervalRef = React.useRef(null);
+
+      const LANES = ['Lane 1 (Left)', 'Lane 2 (Center)', 'Lane 3 (Right)'];
+      const SENSOR_SPACING = 15;
+
+      const generateLaneReading = (time, laneIndex) => {
+        const hour = time % 24;
+        let base = 0.3;
+        if(laneIndex===0 && hour>=7 && hour<=9) base=0.75;
+        else if(laneIndex===1) base=(hour>=7 && hour<=19?0.7:0.4);
+        else if(laneIndex===2 && hour>=17 && hour<=19) base=0.8;
+        const noise = (Math.random()-0.5)*0.15;
+        return Math.max(0, Math.min(1, base+noise));
+      };
+
+      const simulateSensorData = () => {
+        const hour = new Date().getHours()+Math.random()*0.5;
+        const newReading = [
+          generateLaneReading(hour,0),
+          generateLaneReading(hour,1),
+          generateLaneReading(hour,2)
+        ];
+        setSensorData(newReading);
+        setHistoricalData(prev => [
+          ...prev.slice(-15),
+          {time:new Date().toLocaleTimeString(), lane1:(newReading[0]*100).toFixed(1), lane2:(newReading[1]*100).toFixed(1), lane3:(newReading[2]*100).toFixed(1)}
+        ]);
+      };
+
+      const toggleSimulation = () => {
+        if(isSimulating){
+          clearInterval(intervalRef.current);
+          intervalRef.current=null;
+          setIsSimulating(false);
+        } else {
+          setIsSimulating(true);
+          simulateSensorData();
+          intervalRef.current = setInterval(simulateSensorData,2500);
+        }
+      };
+
+      React.useEffect(()=>{
+        return () => { if(intervalRef.current) clearInterval(intervalRef.current); };
+      }, []);
 
       return (
-        <div>
-          <h2>Traffic Predictor AI</h2>
-          <p>{message}</p>
-          <button onClick={() => setMessage("Traffic predicted successfully!")}>
-            Run Prediction
-          </button>
+        <div style={{background:'#7bcdd5', padding:'20px', borderRadius:'10px'}}>
+          <div style={{background:'#c3d871', padding:'10px', marginBottom:'10px', borderRadius:'8px'}}>
+            <h2 style={{marginBottom:'5px', display:'flex', alignItems:'center', gap:'5px'}}>
+              Smart Traffic Lane Congestion Monitor
+            </h2>
+            <p>Static congestion display based on 3 ultrasonic sensors ({SENSOR_SPACING}cm spacing)</p>
+          </div>
+
+          <div style={{marginBottom:'10px'}}>
+            <button onClick={toggleSimulation} style={{padding:'10px', fontWeight:'bold', background:isSimulating?'red':'green', color:'white', borderRadius:'5px'}}>
+              {isSimulating?'Stop Simulation':'Start Live Simulation'}
+            </button>
+          </div>
+
+          <div style={{display:'flex', gap:'10px', marginBottom:'10px'}}>
+            {LANES.map((lane, idx)=>(
+              <div key={idx} style={{background:'#f7fadb', padding:'10px', borderRadius:'8px', flex:1}}>
+                <h4>{lane}</h4>
+                <p style={{fontSize:'24px', fontWeight:'bold'}}>{(sensorData[idx]*100).toFixed(0)}%</p>
+                <div style={{background:'#ddd', height:'16px', borderRadius:'8px'}}>
+                  <div className="lane-bar" style={{width:`${sensorData[idx]*100}%`, background:idx===0?'red':idx===1?'orange':'yellow'}}></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {historicalData.length>0 && (
+            <div style={{background:'#c3d871', padding:'10px', borderRadius:'8px'}}>
+              <h3 style={{marginBottom:'5px'}}>Historical Traffic Patterns</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={historicalData}>
+                  <CartesianGrid strokeDasharray="3 3"/>
+                  <XAxis dataKey="time"/>
+                  <YAxis/>
+                  <Tooltip/>
+                  <Legend/>
+                  <Line type="monotone" dataKey="lane1" stroke="#ef4444"/>
+                  <Line type="monotone" dataKey="lane2" stroke="#f97316"/>
+                  <Line type="monotone" dataKey="lane3" stroke="#f59e0b"/>
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       );
     }
 
     const aiContainer = document.getElementById("ai-container");
-
     document.getElementById("show-ai").onclick = function() {
-      aiContainer.style.display = "block";
+      aiContainer.style.display='block';
       ReactDOM.createRoot(aiContainer).render(<TrafficPredictor />);
-      aiContainer.scrollIntoView({behavior: "smooth"});
+      aiContainer.scrollIntoView({behavior:'smooth'});
     };
   </script>
 
