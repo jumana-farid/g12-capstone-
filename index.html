@@ -69,6 +69,7 @@
       padding: 20px;
       border-radius: 10px;
       background: rgba(0,0,0,0.1);
+      display: none;
     }
   </style>
 
@@ -84,6 +85,7 @@
 </head>
 <body>
 
+  <!-- HERO SECTION -->
   <div class="hero">
     <h1>Mystery Machine Dashboard</h1>
   </div>
@@ -131,7 +133,8 @@
     </div>
 
     <!-- Container for AI React component -->
-    <div id="ai-container" style="display:none;"></div>
+    <div id="ai-container"></div>
+
   </div>
 
   <!-- Leaflet JS -->
@@ -146,22 +149,32 @@
     L.marker([30.0444, 31.2357]).addTo(liveMap).bindPopup("Center");
     L.circle([30.043, 31.237], {radius: 200, color: "red"}).addTo(liveMap).bindPopup("Congested");
     L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(liveMap).bindPopup("Free");
+  </script>
 
-    // Show AI container and load React component
+  <!-- AI React Component -->
+  <script type="text/babel">
+    function TrafficPredictor() {
+      const [message, setMessage] = React.useState("Predicting traffic...");
+
+      return (
+        <div>
+          <h2>Traffic Predictor AI</h2>
+          <p>{message}</p>
+          <button onClick={() => setMessage("Traffic predicted successfully!")}>
+            Run Prediction
+          </button>
+        </div>
+      );
+    }
+
+    const aiContainer = document.getElementById("ai-container");
+
     document.getElementById("show-ai").onclick = function() {
-      const aiContainer = document.getElementById("ai-container");
       aiContainer.style.display = "block";
-
-      // Only load React once
-      if(!aiContainer.hasChildNodes()) {
-        const script = document.createElement("script");
-        script.type = "text/babel";
-        script.src = "trafficPredictor.jsx";
-        document.body.appendChild(script);
-      }
-      // Scroll to AI
+      ReactDOM.createRoot(aiContainer).render(<TrafficPredictor />);
       aiContainer.scrollIntoView({behavior: "smooth"});
     };
   </script>
+
 </body>
 </html>
