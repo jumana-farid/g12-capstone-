@@ -41,7 +41,6 @@
       border-bottom:8px solid #ff7f00;
     }
 
-    /* Existing image map */
     #map {
       width: 100%;
       display: flex;
@@ -56,7 +55,6 @@
       height: auto;
     }
 
-    /* NEW live map box */
     #liveMap {
       width: 100%;
       height: 400px;
@@ -64,10 +62,26 @@
       border: 4px solid #ff7f00;
       border-radius: 10px;
     }
+
+    #ai-container {
+      margin-top: 30px;
+      border: 3px solid #ff7f00;
+      padding: 20px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.1);
+      display: none;
+    }
   </style>
 
-  <!-- Leaflet CSS (for live interactive map) -->
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- React + ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
 
@@ -90,13 +104,10 @@
     </div>
 
     <h2>Map</h2>
-
-    <!-- Your EXACT image map -->
     <div id="map">
       <img src="Triangular_Object_with_Yellow_Accents-removebg-preview.png" alt="Uploaded Map Photo">
     </div>
 
-    <!-- NEW: LIVE INTERACTIVE MAP -->
     <h2>Live Map</h2>
     <div id="liveMap"></div>
 
@@ -112,27 +123,57 @@
       </div>
     </div>
 
+    <!-- Buttons -->
     <div style="margin-top:20px;">
       <a href="https://weather.com" target="_blank" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; background:#ff7f00; color:white; font-weight:bold;">Go to Weather Website</a>
+      
       <a href="#" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; margin-left:10px; background:#ff7f00; color:white; font-weight:bold;">Expected Earthquakes</a>
+      
+      <button id="show-ai" style="padding:15px 30px; font-size:1.2rem; border:2px solid orange; border-radius:8px; margin-left:10px; background:#ff7f00; color:white; font-weight:bold; cursor:pointer;">AI</button>
     </div>
+
+    <!-- Container for AI React component -->
+    <div id="ai-container"></div>
 
   </div>
 
-  <!-- Leaflet JS for live map -->
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
     // LIVE MAP
     var liveMap = L.map('liveMap').setView([30.0444, 31.2357], 14);
-
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(liveMap);
-
     L.marker([30.0444, 31.2357]).addTo(liveMap).bindPopup("Center");
     L.circle([30.043, 31.237], {radius: 200, color: "red"}).addTo(liveMap).bindPopup("Congested");
     L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(liveMap).bindPopup("Free");
+  </script>
+
+  <!-- AI React Component -->
+  <script type="text/babel">
+    function TrafficPredictor() {
+      const [message, setMessage] = React.useState("Predicting traffic...");
+
+      return (
+        <div>
+          <h2>Traffic Predictor AI</h2>
+          <p>{message}</p>
+          <button onClick={() => setMessage("Traffic predicted successfully!")}>
+            Run Prediction
+          </button>
+        </div>
+      );
+    }
+
+    const aiContainer = document.getElementById("ai-container");
+
+    document.getElementById("show-ai").onclick = function() {
+      aiContainer.style.display = "block";
+      ReactDOM.createRoot(aiContainer).render(<TrafficPredictor />);
+      aiContainer.scrollIntoView({behavior: "smooth"});
+    };
   </script>
 
 </body>
