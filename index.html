@@ -57,9 +57,14 @@
     }
 
     #ai-container {
-      margin-top: 30px;
-      padding: 20px;
+      margin-top: 20px;
       display: none;
+      color: #000;
+      background: rgba(255,255,255,0.9);
+      padding: 15px;
+      border: 2px solid #ff7f00;
+      border-radius: 10px;
+      text-align: left;
     }
 
     a, button {
@@ -92,6 +97,9 @@
       transition: width 0.5s;
     }
 
+    .lane-box {
+      margin-bottom: 10px;
+    }
   </style>
 
   <!-- Leaflet CSS -->
@@ -106,9 +114,6 @@
 
   <!-- Recharts -->
   <script src="https://cdn.jsdelivr.net/npm/recharts/umd/Recharts.min.js"></script>
-
-  <!-- Lucide Icons -->
-  <script src="https://cdn.jsdelivr.net/npm/lucide/dist/lucide.min.js"></script>
 </head>
 <body>
 
@@ -172,22 +177,19 @@
     L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(liveMap).bindPopup("Free");
   </script>
 
-  <!-- Inline TrafficPredictor -->
+  <!-- Minimal inline TrafficPredictor -->
   <script type="text/babel">
     const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
-    const { Activity, TrendingUp, Car } = lucide;
 
     function TrafficPredictor() {
       const [sensorData, setSensorData] = React.useState([0,0,0]);
       const [historicalData, setHistoricalData] = React.useState([]);
       const [isSimulating, setIsSimulating] = React.useState(false);
       const intervalRef = React.useRef(null);
-
       const LANES = ['Lane 1 (Left)', 'Lane 2 (Center)', 'Lane 3 (Right)'];
-      const SENSOR_SPACING = 15;
 
-      const generateLaneReading = (time, laneIndex) => {
-        const hour = time % 24;
+      const generateLaneReading = (time,laneIndex)=>{
+        const hour = time%24;
         let base = 0.3;
         if(laneIndex===0 && hour>=7 && hour<=9) base=0.75;
         else if(laneIndex===1) base=(hour>=7 && hour<=19?0.7:0.4);
@@ -196,76 +198,54 @@
         return Math.max(0, Math.min(1, base+noise));
       };
 
-      const simulateSensorData = () => {
+      const simulateSensorData = ()=>{
         const hour = new Date().getHours()+Math.random()*0.5;
-        const newReading = [
+        const newReading=[
           generateLaneReading(hour,0),
           generateLaneReading(hour,1),
           generateLaneReading(hour,2)
         ];
         setSensorData(newReading);
-        setHistoricalData(prev => [
+        setHistoricalData(prev=>[
           ...prev.slice(-15),
           {time:new Date().toLocaleTimeString(), lane1:(newReading[0]*100).toFixed(1), lane2:(newReading[1]*100).toFixed(1), lane3:(newReading[2]*100).toFixed(1)}
         ]);
       };
 
-      const toggleSimulation = () => {
-        if(isSimulating){
-          clearInterval(intervalRef.current);
-          intervalRef.current=null;
-          setIsSimulating(false);
-        } else {
-          setIsSimulating(true);
-          simulateSensorData();
-          intervalRef.current = setInterval(simulateSensorData,2500);
-        }
+      const toggleSimulation = ()=>{
+        if(isSimulating){ clearInterval(intervalRef.current); intervalRef.current=null; setIsSimulating(false);}
+        else{ setIsSimulating(true); simulateSensorData(); intervalRef.current=setInterval(simulateSensorData,2500);}
       };
 
-      React.useEffect(()=>{
-        return () => { if(intervalRef.current) clearInterval(intervalRef.current); };
-      }, []);
+      React.useEffect(()=>{ return ()=>{if(intervalRef.current) clearInterval(intervalRef.current);} }, []);
 
       return (
-        <div style={{background:'#7bcdd5', padding:'20px', borderRadius:'10px'}}>
-          <div style={{background:'#c3d871', padding:'10px', marginBottom:'10px', borderRadius:'8px'}}>
-            <h2 style={{marginBottom:'5px', display:'flex', alignItems:'center', gap:'5px'}}>
-              Smart Traffic Lane Congestion Monitor
-            </h2>
-            <p>Static congestion display based on 3 ultrasonic sensors ({SENSOR_SPACING}cm spacing)</p>
-          </div>
-
-          <div style={{marginBottom:'10px'}}>
-            <button onClick={toggleSimulation} style={{padding:'10px', fontWeight:'bold', background:isSimulating?'red':'green', color:'white', borderRadius:'5px'}}>
-              {isSimulating?'Stop Simulation':'Start Live Simulation'}
-            </button>
-          </div>
-
-          <div style={{display:'flex', gap:'10px', marginBottom:'10px'}}>
-            {LANES.map((lane, idx)=>(
-              <div key={idx} style={{background:'#f7fadb', padding:'10px', borderRadius:'8px', flex:1}}>
-                <h4>{lane}</h4>
-                <p style={{fontSize:'24px', fontWeight:'bold'}}>{(sensorData[idx]*100).toFixed(0)}%</p>
-                <div style={{background:'#ddd', height:'16px', borderRadius:'8px'}}>
+        <div>
+          <button onClick={toggleSimulation} style={{marginBottom:'10px', padding:'8px', fontWeight:'bold'}}>
+            {isSimulating?'Stop Simulation':'Start Simulation'}
+          </button>
+          <div className="lane-box">
+            {LANES.map((lane,idx)=>(
+              <div key={idx}>
+                <strong>{lane}:</strong> {(sensorData[idx]*100).toFixed(0)}%
+                <div style={{background:'#ddd', height:'12px', borderRadius:'6px', margin:'3px 0'}}>
                   <div className="lane-bar" style={{width:`${sensorData[idx]*100}%`, background:idx===0?'red':idx===1?'orange':'yellow'}}></div>
                 </div>
               </div>
             ))}
           </div>
-
           {historicalData.length>0 && (
-            <div style={{background:'#c3d871', padding:'10px', borderRadius:'8px'}}>
-              <h3 style={{marginBottom:'5px'}}>Historical Traffic Patterns</h3>
-              <ResponsiveContainer width="100%" height={200}>
+            <div style={{height:'200px'}}>
+              <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={historicalData}>
                   <CartesianGrid strokeDasharray="3 3"/>
                   <XAxis dataKey="time"/>
                   <YAxis/>
                   <Tooltip/>
                   <Legend/>
-                  <Line type="monotone" dataKey="lane1" stroke="#ef4444"/>
-                  <Line type="monotone" dataKey="lane2" stroke="#f97316"/>
-                  <Line type="monotone" dataKey="lane3" stroke="#f59e0b"/>
+                  <Line type="monotone" dataKey="lane1" stroke="red"/>
+                  <Line type="monotone" dataKey="lane2" stroke="orange"/>
+                  <Line type="monotone" dataKey="lane3" stroke="yellow"/>
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -275,7 +255,7 @@
     }
 
     const aiContainer = document.getElementById("ai-container");
-    document.getElementById("show-ai").onclick = function() {
+    document.getElementById("show-ai").onclick=function(){
       aiContainer.style.display='block';
       ReactDOM.createRoot(aiContainer).render(<TrafficPredictor />);
       aiContainer.scrollIntoView({behavior:'smooth'});
