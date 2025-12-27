@@ -2,19 +2,27 @@ window.onload = function () {
   const canvas = document.getElementById("tri-canvas");
   const ctx = canvas.getContext("2d");
 
-  const img = new Image();
-  img.src = "Triangular Object with Yellow Accents.png"; // your map
-
-  img.onload = function () {
-    resizeCanvas();
+  // Road/Intersection polygons
+  const roads = {
+    road1: [[75,342],[253,126],[289,155],[137,341]],
+    road3: [[358,128],[314,160],[440,341],[532,340]]
   };
 
-  // Example AI predictions
-  // true = congested, false = clear
-  const aiPredictions = {
-    road1: false,
-    road2: true
+  // Intersection ellipse coordinates
+  const intersection = {
+    x: (532 + 305) / 2, // center x
+    y: (366 + 246) / 2, // center y
+    radiusX: Math.abs(532 - 305) / 2,
+    radiusY: Math.abs(366 - 246) / 2
   };
+
+  function getColor(status) {
+    switch(status) {
+      case "Occupied": return "rgba(255,0,0,0.5)";  // red, 50% opacity
+      case "In use": return "rgba(255,255,0,0.5)";  // yellow, 50% opacity
+      default: return "rgba(0,255,0,0.5)";          // green, 50% opacity
+    }
+  }
 
   function resizeCanvas() {
     canvas.width = canvas.offsetWidth;
@@ -23,35 +31,49 @@ window.onload = function () {
   }
 
   function drawMapAndRoads() {
-    // Draw base map
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.globalAlpha = 0.4;
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const img = new Image();
+    img.src = "Triangular Object with Yellow Accents.png"; // map background
 
-    ctx.globalAlpha = 1; // reset alpha for roads
+    img.onload = function () {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = 0.4;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = 1;
 
-    // Draw road 1
-    ctx.beginPath();
-    ctx.moveTo(50, 100); // start point
-    ctx.lineTo(300, 100); // end point
-    ctx.lineWidth = 10;
-    ctx.strokeStyle = aiPredictions.road1 ? "red" : "green"; // red if congested
-    ctx.stroke();
+      // Assuming triangle.js exposes an object `triangleStatus`
+      // with UL1, UL2, UL3 values like: "Occupied" / "In use"
+      const road1Color = getColor(triangleStatus.UL1);
+      const intersectionColor = getColor(triangleStatus.UL2);
+      const road3Color = getColor(triangleStatus.UL3);
 
-    // Draw road 2
-    ctx.beginPath();
-    ctx.moveTo(200, 50);
-    ctx.lineTo(200, 300);
-    ctx.lineWidth = 10;
-    ctx.strokeStyle = aiPredictions.road2 ? "red" : "green";
-    ctx.stroke();
+      // Draw Road 1 polygon
+      ctx.beginPath();
+      ctx.moveTo(roads.road1[0][0], roads.road1[0][1]);
+      for(let i=1; i<roads.road1.length; i++){
+        ctx.lineTo(roads.road1[i][0], roads.road1[i][1]);
+      }
+      ctx.closePath();
+      ctx.fillStyle = road1Color;
+      ctx.fill();
 
-    // Draw intersection as a circle
-    ctx.beginPath();
-    ctx.arc(200, 100, 15, 0, 2 * Math.PI);
-    ctx.fillStyle = "yellow";
-    ctx.fill();
+      // Draw Road 3 polygon
+      ctx.beginPath();
+      ctx.moveTo(roads.road3[0][0], roads.road3[0][1]);
+      for(let i=1; i<roads.road3.length; i++){
+        ctx.lineTo(roads.road3[i][0], roads.road3[i][1]);
+      }
+      ctx.closePath();
+      ctx.fillStyle = road3Color;
+      ctx.fill();
+
+      // Draw Intersection
+      ctx.beginPath();
+      ctx.ellipse(intersection.x, intersection.y, intersection.radiusX, intersection.radiusY, 0, 0, 2*Math.PI);
+      ctx.fillStyle = intersectionColor;
+      ctx.fill();
+    };
   }
 
-  window.addEventListener("resize", resizeCanvas);
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
 };
