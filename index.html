@@ -95,11 +95,15 @@
     <div style="display:flex; justify-content:center; gap:20px; margin-bottom:15px;">
       <div style="display:flex; align-items:center; gap:5px;">
         <div style="width:12px; height:12px; background:red; border-radius:50%;"></div>
-        <span>Congested right now</span>
+        <span>Occupied / Congested</span>
       </div>
       <div style="display:flex; align-items:center; gap:5px;">
         <div style="width:12px; height:12px; background:orange; border-radius:50%;"></div>
-        <span>Most likely to congest</span>
+        <span>In Use</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:5px;">
+        <div style="width:12px; height:12px; background:green; border-radius:50%;"></div>
+        <span>Free</span>
       </div>
     </div>
 
@@ -111,24 +115,9 @@
     <h2>Live Map</h2>
     <div id="liveMap"></div>
 
-    <h2>Green Lane Status</h2>
-    <div style="display:flex; justify-content:center; gap:20px; margin:15px 0;">
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:black; border-radius:50%;"></div>
-        <span>Closed</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:green; border-radius:50%;"></div>
-        <span>Open</span>
-      </div>
-    </div>
-
     <!-- Buttons -->
     <div style="margin-top:20px;">
       <a href="https://weather.com" target="_blank" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; background:#ff7f00; color:white; font-weight:bold;">Go to Weather Website</a>
-      
-      <a href="#" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; margin-left:10px; background:#ff7f00; color:white; font-weight:bold;">Expected Earthquakes</a>
-      
       <button id="show-ai" style="padding:15px 30px; font-size:1.2rem; border:2px solid orange; border-radius:8px; margin-left:10px; background:#ff7f00; color:white; font-weight:bold; cursor:pointer;">AI</button>
     </div>
 
@@ -141,14 +130,62 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // LIVE MAP
+    // =========================
+    // Live Map Setup
+    // =========================
     var liveMap = L.map('liveMap').setView([30.0444, 31.2357], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(liveMap);
-    L.marker([30.0444, 31.2357]).addTo(liveMap).bindPopup("Center");
-    L.circle([30.043, 31.237], {radius: 200, color: "red"}).addTo(liveMap).bindPopup("Congested");
-    L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(liveMap).bindPopup("Free");
+
+    // Lane coordinates
+    const lanes = {
+      UL1: { lat: 30.043, lng: 31.237 },
+      UL2: { lat: 30.046, lng: 31.236 },
+      UL3: { lat: 30.045, lng: 31.238 }
+    };
+
+    // Color mapping
+    const colorMap = {
+      "Free": "green",
+      "In use": "orange",
+      "Occupied, please move to green lane": "red"
+    };
+
+    // Layer group to clear old circles before redraw
+    const laneLayerGroup = L.layerGroup().addTo(liveMap);
+
+    async function updateTrafficMap() {
+      try {
+        const response = await fetch('data.xlsx_lane_status.json'); // your AI output JSON
+        const data = await response.json();
+
+        // Clear previous lane markers
+        laneLayerGroup.clearLayers();
+
+        // Take latest row
+        const latest = data[data.length - 1];
+
+        Object.keys(latest).forEach(key => {
+          if (key.endsWith("_status")) {
+            const ul = key.replace("_status","");
+            const status = latest[key];
+            const color = colorMap[status] || "black";
+
+            L.circle([lanes[ul].lat, lanes[ul].lng], { radius: 200, color })
+              .addTo(laneLayerGroup)
+              .bindPopup(`${ul}: ${status}`);
+          }
+        });
+
+      } catch(err) {
+        console.error("Failed to load AI traffic data", err);
+      }
+    }
+
+    // Update map every 10 seconds
+    updateTrafficMap();
+    setInterval(updateTrafficMap, 10000);
   </script>
 
   <!-- AI React Component -->
@@ -156,13 +193,24 @@
     function TrafficPredictor() {
       const [message, setMessage] = React.useState("Predicting traffic...");
 
+      const runPrediction = async () => {
+        setMessage("Predicting traffic...");
+        try {
+          const response = await fetch('data.xlsx_lane_status.json');
+          const data = await response.json();
+          // Call map update
+          window.updateTrafficMap();
+          setMessage("Traffic predicted successfully!");
+        } catch(err) {
+          setMessage("Prediction failed");
+        }
+      };
+
       return (
         <div>
           <h2>Traffic Predictor AI</h2>
           <p>{message}</p>
-          <button onClick={() => setMessage("Traffic predicted successfully!")}>
-            Run Prediction
-          </button>
+          <button onClick={runPrediction}>Run Prediction</button>
         </div>
       );
     }
