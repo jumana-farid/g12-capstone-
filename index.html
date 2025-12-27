@@ -70,109 +70,111 @@
       border-radius: 10px;
       background: rgba(0,0,0,0.1);
       display: none;
+      color: black;
     }
   </style>
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  <!-- React + ReactDOM -->
+  <!-- React -->
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
 
-  <!-- Babel for JSX -->
+  <!-- Babel -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
 
-  <!-- HERO SECTION -->
   <div class="hero">
     <h1>Mystery Machine Dashboard</h1>
   </div>
 
   <div class="content">
     <h2>Map Status</h2>
-    <div style="display:flex; justify-content:center; gap:20px; margin-bottom:15px;">
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:red; border-radius:50%;"></div>
-        <span>Congested right now</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:orange; border-radius:50%;"></div>
-        <span>Most likely to congest</span>
-      </div>
-    </div>
 
     <h2>Map</h2>
     <div id="map">
-      <img src="Triangular_Object_with_Yellow_Accents-removebg-preview.png" alt="Uploaded Map Photo">
+      <img src="Triangular_Object_with_Yellow_Accents-removebg-preview.png">
     </div>
 
     <h2>Live Map</h2>
     <div id="liveMap"></div>
 
-    <h2>Green Lane Status</h2>
-    <div style="display:flex; justify-content:center; gap:20px; margin:15px 0;">
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:black; border-radius:50%;"></div>
-        <span>Closed</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:green; border-radius:50%;"></div>
-        <span>Open</span>
-      </div>
-    </div>
-
-    <!-- Buttons -->
     <div style="margin-top:20px;">
-      <a href="https://weather.com" target="_blank" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; background:#ff7f00; color:white; font-weight:bold;">Go to Weather Website</a>
-      
-      <a href="#" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; margin-left:10px; background:#ff7f00; color:white; font-weight:bold;">Expected Earthquakes</a>
-      
-      <button id="show-ai" style="padding:15px 30px; font-size:1.2rem; border:2px solid orange; border-radius:8px; margin-left:10px; background:#ff7f00; color:white; font-weight:bold; cursor:pointer;">AI</button>
+      <button id="show-ai"
+        style="padding:15px 30px; font-size:1.2rem; border:2px solid orange;
+        border-radius:8px; background:#ff7f00; color:white; font-weight:bold; cursor:pointer;">
+        AI
+      </button>
     </div>
 
-    <!-- Container for AI React component -->
     <div id="ai-container"></div>
-
   </div>
 
-  <!-- Leaflet JS -->
+  <!-- Leaflet -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <script>
-    // LIVE MAP
     var liveMap = L.map('liveMap').setView([30.0444, 31.2357], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(liveMap);
-    L.marker([30.0444, 31.2357]).addTo(liveMap).bindPopup("Center");
-    L.circle([30.043, 31.237], {radius: 200, color: "red"}).addTo(liveMap).bindPopup("Congested");
-    L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(liveMap).bindPopup("Free");
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(liveMap);
+    L.circle([30.043, 31.237], {radius:200, color:"red"}).addTo(liveMap);
+    L.circle([30.046, 31.236], {radius:200, color:"green"}).addTo(liveMap);
   </script>
 
-  <!-- AI React Component -->
+  <!-- ✅ REAL AI COMPONENT -->
   <script type="text/babel">
     function TrafficPredictor() {
-      const [message, setMessage] = React.useState("Predicting traffic...");
+      const [data, setData] = React.useState([]);
+      const [loading, setLoading] = React.useState(true);
+
+      React.useEffect(() => {
+        fetch("traffic_output.json")
+          .then(res => res.json())
+          .then(json => {
+            setData(json.slice(0, 10));
+            setLoading(false);
+          });
+      }, []);
+
+      if (loading) return <p>🔄 Loading AI predictions...</p>;
 
       return (
         <div>
-          <h2>Traffic Predictor AI</h2>
-          <p>{message}</p>
-          <button onClick={() => setMessage("Traffic predicted successfully!")}>
-            Run Prediction
-          </button>
+          <h2>🚦 Traffic Predictor AI</h2>
+
+          <table style={{width:"100%", borderCollapse:"collapse"}}>
+            <thead>
+              <tr style={{background:"#ff7f00", color:"white"}}>
+                <th>Avg Distance</th>
+                <th>Future Avg</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((row, i) => (
+                <tr key={i}
+                  style={{
+                    background:
+                      row.traffic_status === "Congested" ? "#ff6b6b" :
+                      row.traffic_status === "Moderate" ? "#ffd93d" :
+                      "#6bff95"
+                  }}>
+                  <td>{row.avg_distance.toFixed(2)}</td>
+                  <td>{row.avg_distance_future.toFixed(2)}</td>
+                  <td><b>{row.traffic_status}</b></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       );
     }
 
-    const aiContainer = document.getElementById("ai-container");
-
-    document.getElementById("show-ai").onclick = function() {
-      aiContainer.style.display = "block";
-      ReactDOM.createRoot(aiContainer).render(<TrafficPredictor />);
-      aiContainer.scrollIntoView({behavior: "smooth"});
+    document.getElementById("show-ai").onclick = () => {
+      const c = document.getElementById("ai-container");
+      c.style.display = "block";
+      ReactDOM.createRoot(c).render(<TrafficPredictor />);
+      c.scrollIntoView({behavior:"smooth"});
     };
   </script>
 
