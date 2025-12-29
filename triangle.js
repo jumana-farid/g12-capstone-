@@ -3,7 +3,7 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.net.URL;
+import java.net.*;
 import javax.imageio.ImageIO;
 import org.json.*;
 
@@ -35,10 +35,10 @@ public class TrafficMap extends JPanel {
         try {
             mapImage = ImageIO.read(new File("Triangular Object with Yellow Accents.png"));
         } catch (IOException e) {
-            System.err.println("Image not found!");
+            System.err.println("Image not found! Make sure it is in the project folder.");
         }
 
-        // ✅ Updated to your raw JSON URL
+        // ✅ Fixed GitHub raw JSON fetch
         loadTrafficData("https://raw.githubusercontent.com/jumana-farid/g12-capstone-/refs/heads/main/trafficPredictor.json");
 
         // Update traffic overlay every 2 seconds for demo
@@ -48,13 +48,16 @@ public class TrafficMap extends JPanel {
     private void loadTrafficData(String urlStr) {
         try {
             URL url = new URL(urlStr);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             StringBuilder sb = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) sb.append(line);
             reader.close();
 
             trafficData = new JSONArray(sb.toString());
+            System.out.println("Loaded JSON entries: " + trafficData.length());
             applyTrafficState();
         } catch (Exception e) {
             e.printStackTrace();
@@ -69,6 +72,8 @@ public class TrafficMap extends JPanel {
         UL2_status = state.getString("UL2_status");
         UL3_status = state.getString("UL3_status");
 
+        System.out.println("UL1: " + UL1_status + ", UL2: " + UL2_status + ", UL3: " + UL3_status);
+
         repaint();
     }
 
@@ -79,11 +84,11 @@ public class TrafficMap extends JPanel {
     }
 
     private Color getColor(String status) {
-        if (status == null) return new Color(0,255,0,128);
+        if (status == null) return new Color(0,255,0,255);
         String s = status.toLowerCase();
-        if (s.contains("occupied")) return new Color(255,0,0,128);
-        if (s.contains("use")) return new Color(255,255,0,128);
-        return new Color(0,255,0,128);
+        if (s.contains("occupied")) return new Color(255,0,0,255);
+        if (s.contains("use")) return new Color(255,255,0,255);
+        return new Color(0,255,0,255);
     }
 
     private int scaleX(int x) {
