@@ -95,6 +95,7 @@
 </head>
 <body>
 
+  <!-- HERO SECTION -->
   <div class="hero">
     <h1>Mystery Machine Dashboard</h1>
   </div>
@@ -124,17 +125,31 @@
     <h2>Live Map</h2>
     <div id="liveMap"></div>
 
-    <!-- Canvas for AI traffic -->
+    <h2>AI Canvas Map</h2>
     <canvas id="tri-canvas"></canvas>
 
+    <!-- Buttons -->
     <div style="margin-top:20px;">
-      <a href="https://weather.com" target="_blank" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; background:#ff7f00; color:white; font-weight:bold;">Go to Weather Website</a>
-      <button id="show-ai" style="padding:15px 30px; font-size:1.2rem; border:2px solid orange; border-radius:8px; margin-left:10px; background:#ff7f00; color:white; font-weight:bold; cursor:pointer;">AI</button>
+      <a href="https://weather.com" target="_blank"
+         style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; background:#ff7f00; color:white; font-weight:bold;">
+         Go to Weather Website
+      </a>
+
+      <button id="show-ai"
+         style="padding:15px 30px; font-size:1.2rem; border:2px solid orange; border-radius:8px; margin-left:10px; background:#ff7f00; color:white; font-weight:bold; cursor:pointer;">
+         AI
+      </button>
+
+      <button id="show-earthquake"
+         style="padding:15px 30px; font-size:1.2rem; border:2px solid orange; border-radius:8px; margin-left:10px; background:#ff7f00; color:white; font-weight:bold; cursor:pointer;">
+         Earthquake Predictions
+      </button>
     </div>
 
     <div id="ai-container"></div>
   </div>
 
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Global triangle status -->
@@ -142,10 +157,7 @@
     window.triangleStatus = { UL1: "Free", UL2: "Free", UL3: "Free" };
   </script>
 
-  <!-- Triangle JS -->
-  <script src="triangle.js"></script>
-
-  <!-- Live map JS -->
+  <!-- Live Map Script -->
   <script>
     var liveMap = L.map('liveMap').setView([30.0444, 31.2357], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -172,6 +184,7 @@
         const data = await response.json();
 
         laneLayerGroup.clearLayers();
+
         const latest = data[data.length - 1];
 
         Object.keys(latest).forEach(key => {
@@ -193,9 +206,14 @@
 
     updateTrafficMap();
     setInterval(updateTrafficMap, 10000);
+
+    // Earthquake button placeholder
+    document.getElementById("show-earthquake").onclick = function() {
+      alert("Earthquake predictions feature coming soon!");
+    };
   </script>
 
-  <!-- AI React component -->
+  <!-- AI React Component -->
   <script type="text/babel">
     function TrafficPredictor() {
       const [message, setMessage] = React.useState("Predicting traffic...");
