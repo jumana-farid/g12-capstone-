@@ -1,307 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mystery Machine Dashboard</title>
-
-  <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      font-family: 'Comic Sans MS', 'Fredoka One', Arial, sans-serif;
-      height: 100%;
-    }
-
-    .hero {
-      position: relative;
-      height: 70vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #fff200;
-      text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
-      overflow: hidden;
-      background: url('hero-background.jpg') no-repeat center center;
-      background-size: cover;
-    }
-
-    .hero h1 {
-      position: relative;
-      font-size: 4rem;
-      z-index: 1;
-    }
-
-    .content {
-      padding: 20px;
-      text-align: center;
-      background:#1cb5ac; 
-      color:white;
-      border-top:8px solid #ff7f00;
-      border-bottom:8px solid #ff7f00;
-    }
-
-    #map {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    #map img {
-      display: block;
-      max-width: 100%;
-      height: auto;
-    }
-
-    #liveMap, #trafficCanvas {
-      width: 100%;
-      max-width: 700px;
-      height: 400px;
-      margin: 20px auto;
-      border: 4px solid #ff7f00;
-      border-radius: 10px;
-    }
-
-    #ai-container {
-      margin-top: 30px;
-      border: 3px solid #ff7f00;
-      padding: 20px;
-      border-radius: 10px;
-      background: rgba(0,0,0,0.1);
-      display: none;
-    }
-
-    .status-legend {
-      display:flex;
-      justify-content:center;
-      gap:20px;
-      margin:15px 0;
-    }
-
-    .status-legend div {
-      display:flex;
-      align-items:center;
-      gap:5px;
-    }
-
-    .status-dot {
-      width:12px;
-      height:12px;
-      border-radius:50%;
-    }
-
-    .button-container {
-      margin-top:20px;
-    }
-
-    .button-container a, .button-container button {
-      padding:15px 30px;
-      font-size:1.2rem;
-      text-decoration:none;
-      border:2px solid orange;
-      border-radius:8px;
-      display:inline-block;
-      margin-left:10px;
-      background:#ff7f00;
-      color:white;
-      font-weight:bold;
-      cursor:pointer;
-    }
-    .button-container a:first-child {
-      margin-left:0;
-    }
-
-  </style>
-
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-  <!-- React + ReactDOM -->
-  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-
-  <!-- Babel for JSX -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Traffic Dashboard - SVG</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align:center; background:#f0f0f0; }
+  svg { max-width:700px; width:100%; border:3px solid #ff7f00; margin:20px auto; display:block; }
+  button { padding:10px 20px; margin:10px; font-size:16px; cursor:pointer; }
+</style>
 </head>
 <body>
 
-  <!-- HERO SECTION -->
-  <div class="hero">
-    <h1>Mystery Machine Dashboard</h1>
-  </div>
+<h1>Live Traffic Dashboard (SVG Method)</h1>
 
-  <div class="content">
-    <h2>Map Status</h2>
-    <div class="status-legend">
-      <div>
-        <div class="status-dot" style="background:red;"></div>
-        <span>Congested right now</span>
-      </div>
-      <div>
-        <div class="status-dot" style="background:orange;"></div>
-        <span>Most likely to congest</span>
-      </div>
-    </div>
+<!-- SVG map -->
+<svg id="traffic-svg" viewBox="0 0 700 450">
+  <!-- UL1 Road -->
+  <polygon id="UL1" points="75,342 253,126 289,155 137,341" fill="green" opacity="0.5"/>
+  
+  <!-- UL3 Road -->
+  <polygon id="UL3" points="358,128 314,160 440,341 532,340" fill="green" opacity="0.5"/>
+  
+  <!-- UL2 Intersection -->
+  <ellipse id="UL2" cx="420" cy="230" rx="60" ry="40" fill="green" opacity="0.5"/>
+</svg>
 
-    <h2>Map</h2>
-    <div id="map">
-      <img src="https://raw.githubusercontent.com/jumana-farid/g12-capstone-/main/Triangular_Object_with_Yellow_Accents-removebg-preview.png" alt="Uploaded Map Photo">
-    </div>
+<!-- Buttons -->
+<div>
+  <button onclick="updateTraffic()">Update Traffic</button>
+  <button onclick="alert('Earthquake Predictions Coming Soon')">Earthquake Predictions</button>
+</div>
 
-    <h2>Live Map</h2>
-    <div id="liveMap"></div>
+<script>
+// Color mapping
+const colorMap = {
+  "Free": "green",
+  "In use": "orange",
+  "Occupied": "red"
+};
 
-    <h2>Traffic Overlay</h2>
-    <canvas id="trafficCanvas"></canvas>
+// Update function
+async function updateTraffic() {
+  try {
+    const response = await fetch("trafficPredictor.json");
+    const data = await response.json();
+    const latest = data[data.length - 1];
 
-    <h2>Green Lane Status</h2>
-    <div class="status-legend">
-      <div>
-        <div class="status-dot" style="background:black;"></div>
-        <span>Closed</span>
-      </div>
-      <div>
-        <div class="status-dot" style="background:green;"></div>
-        <span>Open</span>
-      </div>
-    </div>
+    // Update SVG colors
+    document.getElementById("UL1").setAttribute("fill", colorMap[latest.UL1] || "black");
+    document.getElementById("UL2").setAttribute("fill", colorMap[latest.UL2] || "black");
+    document.getElementById("UL3").setAttribute("fill", colorMap[latest.UL3] || "black");
 
-    <!-- Buttons -->
-    <div class="button-container">
-      <a href="https://weather.com" target="_blank">Go to Weather Website</a>
-      <a href="#">Expected Earthquakes</a>
-      <button id="show-ai">AI</button>
-    </div>
+  } catch (err) {
+    console.error("Failed to load traffic JSON:", err);
+  }
+}
 
-    <!-- Container for AI React component -->
-    <div id="ai-container"></div>
-
-  </div>
-
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- Live Map Initialization -->
-  <script>
-    var liveMap = L.map('liveMap').setView([30.0444, 31.2357], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(liveMap);
-    L.marker([30.0444, 31.2357]).addTo(liveMap).bindPopup("Center");
-    L.circle([30.043, 31.237], {radius: 200, color: "red"}).addTo(liveMap).bindPopup("Congested");
-    L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(liveMap).bindPopup("Free");
-  </script>
-
-  <!-- Traffic Overlay Canvas -->
-  <script>
-    const canvas = document.getElementById('trafficCanvas');
-    canvas.width = 700;
-    canvas.height = 450;
-    const ctx = canvas.getContext('2d');
-
-    const mapImageUrl = 'https://raw.githubusercontent.com/jumana-farid/g12-capstone-/main/Triangular%20Object%20with%20Yellow%20Accents.png';
-    const mapImage = new Image();
-    mapImage.src = mapImageUrl;
-
-    const road1 = [[75,342],[253,126],[289,155],[137,341]];
-    const road3 = [[358,128],[314,160],[440,341],[532,340]];
-    const intersection = {x: (358+532)/2, y: (128+340)/2, w: 532-358, h: 340-128};
-
-    let trafficData = [];
-    let currentIndex = 0;
-
-    function getColor(status) {
-      if (!status) return 'green';
-      status = status.toLowerCase();
-      if (status.includes('occupied')) return 'red';
-      if (status.includes('use')) return 'yellow';
-      return 'green';
-    }
-
-    async function loadTraffic() {
-      try {
-        const res = await fetch('https://raw.githubusercontent.com/jumana-farid/g12-capstone-/main/trafficPredictor.json');
-        trafficData = await res.json();
-        drawTraffic();
-        setInterval(nextTrafficState, 2000);
-      } catch(e) {
-        console.error("Failed to load JSON, coloring all red");
-        trafficData = [{UL1_status:"Occupied", UL2_status:"Occupied", UL3_status:"Occupied"}];
-        drawTraffic();
-      }
-    }
-
-    function drawTraffic() {
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-
-      if(mapImage.complete) {
-        ctx.globalAlpha = 0.4;
-        ctx.drawImage(mapImage, 0, 0, canvas.width, canvas.height);
-        ctx.globalAlpha = 1;
-      }
-
-      const state = trafficData[currentIndex] || {};
-      const UL1_status = state.UL1_status || 'Occupied';
-      const UL2_status = state.UL2_status || 'Occupied';
-      const UL3_status = state.UL3_status || 'Occupied';
-
-      // Draw road1 (UL1)
-      ctx.fillStyle = getColor(UL1_status);
-      ctx.beginPath();
-      ctx.moveTo(...road1[0]);
-      road1.slice(1).forEach(p => ctx.lineTo(...p));
-      ctx.closePath();
-      ctx.fill();
-
-      // Draw road3 (UL3)
-      ctx.fillStyle = getColor(UL3_status);
-      ctx.beginPath();
-      ctx.moveTo(...road3[0]);
-      road3.slice(1).forEach(p => ctx.lineTo(...p));
-      ctx.closePath();
-      ctx.fill();
-
-      // Draw intersection (UL2)
-      ctx.fillStyle = getColor(UL2_status);
-      ctx.beginPath();
-      ctx.ellipse(intersection.x, intersection.y, intersection.w/2, intersection.h/2, 0, 0, 2*Math.PI);
-      ctx.fill();
-    }
-
-    function nextTrafficState() {
-      currentIndex = (currentIndex + 1) % trafficData.length;
-      drawTraffic();
-    }
-
-    mapImage.onload = loadTraffic;
-  </script>
-
-  <!-- AI React Component -->
-  <script type="text/babel">
-    function TrafficPredictor() {
-      const [message, setMessage] = React.useState("Predicting traffic...");
-
-      return (
-        <div>
-          <h2>Traffic Predictor AI</h2>
-          <p>{message}</p>
-          <button onClick={() => setMessage("Traffic predicted successfully!")}>
-            Run Prediction
-          </button>
-        </div>
-      );
-    }
-
-    const aiContainer = document.getElementById("ai-container");
-
-    document.getElementById("show-ai").onclick = function() {
-      aiContainer.style.display = "block";
-      ReactDOM.createRoot(aiContainer).render(<TrafficPredictor />);
-      aiContainer.scrollIntoView({behavior: "smooth"});
-    };
-  </script>
+// Auto-update every 10 seconds
+updateTraffic();
+setInterval(updateTraffic, 10000);
+</script>
 
 </body>
 </html>
