@@ -33,15 +33,16 @@ public class TrafficMap extends JPanel {
         setPreferredSize(new Dimension(BASE_WIDTH, BASE_HEIGHT));
 
         try {
-            mapImage = ImageIO.read(new File("Triangular Object with Yellow Accents.png"));
+            // Load image from GitHub directly
+            mapImage = ImageIO.read(new URL("https://raw.githubusercontent.com/jumana-farid/g12-capstone-/main/Triangular%20Object%20with%20Yellow%20Accents.png"));
         } catch (IOException e) {
-            System.err.println("Image not found! Make sure it is in the project folder.");
+            System.err.println("Image not found!");
         }
 
-        // ✅ Fixed GitHub raw JSON fetch
-        loadTrafficData("https://raw.githubusercontent.com/jumana-farid/g12-capstone-/refs/heads/main/trafficPredictor.json");
+        // Load traffic JSON from GitHub
+        loadTrafficData("https://raw.githubusercontent.com/jumana-farid/g12-capstone-/main/trafficPredictor.json");
 
-        // Update traffic overlay every 2 seconds for demo
+        // Update traffic overlay every 2 seconds
         new Timer(2000, e -> nextTrafficState()).start();
     }
 
@@ -61,6 +62,10 @@ public class TrafficMap extends JPanel {
             applyTrafficState();
         } catch (Exception e) {
             e.printStackTrace();
+            System.err.println("Failed to load traffic JSON. Coloring all red.");
+            // If JSON fails, set everything to "Occupied"
+            UL1_status = UL2_status = UL3_status = "Occupied";
+            repaint();
         }
     }
 
@@ -68,16 +73,15 @@ public class TrafficMap extends JPanel {
         if (trafficData == null || trafficData.length() == 0) return;
 
         JSONObject state = trafficData.getJSONObject(currentIndex);
-        UL1_status = state.getString("UL1_status");
-        UL2_status = state.getString("UL2_status");
-        UL3_status = state.getString("UL3_status");
-
-        System.out.println("UL1: " + UL1_status + ", UL2: " + UL2_status + ", UL3: " + UL3_status);
+        UL1_status = state.optString("UL1_status", "Occupied");
+        UL2_status = state.optString("UL2_status", "Occupied");
+        UL3_status = state.optString("UL3_status", "Occupied");
 
         repaint();
     }
 
     private void nextTrafficState() {
+        if (trafficData == null || trafficData.length() == 0) return;
         currentIndex++;
         if (currentIndex >= trafficData.length()) currentIndex = 0;
         applyTrafficState();
@@ -91,13 +95,8 @@ public class TrafficMap extends JPanel {
         return new Color(0,255,0,255);
     }
 
-    private int scaleX(int x) {
-        return x * getWidth() / BASE_WIDTH;
-    }
-
-    private int scaleY(int y) {
-        return y * getHeight() / BASE_HEIGHT;
-    }
+    private int scaleX(int x) { return x * getWidth() / BASE_WIDTH; }
+    private int scaleY(int y) { return y * getHeight() / BASE_HEIGHT; }
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -111,27 +110,23 @@ public class TrafficMap extends JPanel {
         g2.drawImage(mapImage, 0, 0, getWidth(), getHeight(), null);
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
 
-        // Fill UL1 shape
+        // Draw road1 (UL1)
         Path2D road1Path = new Path2D.Double();
         road1Path.moveTo(scaleX(road1[0][0]), scaleY(road1[0][1]));
-        for (int i = 1; i < road1.length; i++) {
-            road1Path.lineTo(scaleX(road1[i][0]), scaleY(road1[i][1]));
-        }
+        for (int i = 1; i < road1.length; i++) road1Path.lineTo(scaleX(road1[i][0]), scaleY(road1[i][1]));
         road1Path.closePath();
         g2.setColor(getColor(UL1_status));
         g2.fill(road1Path);
 
-        // Fill UL3 shape
+        // Draw road3 (UL3)
         Path2D road3Path = new Path2D.Double();
         road3Path.moveTo(scaleX(road3[0][0]), scaleY(road3[0][1]));
-        for (int i = 1; i < road3.length; i++) {
-            road3Path.lineTo(scaleX(road3[i][0]), scaleY(road3[i][1]));
-        }
+        for (int i = 1; i < road3.length; i++) road3Path.lineTo(scaleX(road3[i][0]), scaleY(road3[i][1]));
         road3Path.closePath();
         g2.setColor(getColor(UL3_status));
         g2.fill(road3Path);
 
-        // Fill intersection (UL2)
+        // Draw intersection (UL2)
         double ix = intersection.x * getWidth() / BASE_WIDTH;
         double iy = intersection.y * getHeight() / BASE_HEIGHT;
         double irx = intersection.width * getWidth() / BASE_WIDTH;
