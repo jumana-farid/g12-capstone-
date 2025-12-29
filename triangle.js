@@ -1,13 +1,11 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Path2D;
+import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URL;
 import javax.imageio.ImageIO;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.json.*;
 
 public class TrafficMap extends JPanel {
 
@@ -33,18 +31,18 @@ public class TrafficMap extends JPanel {
 
     public TrafficMap() {
         setPreferredSize(new Dimension(BASE_WIDTH, BASE_HEIGHT));
+
         try {
-            // Load background image
             mapImage = ImageIO.read(new File("Triangular Object with Yellow Accents.png"));
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Image not found!");
         }
 
-        // Load traffic JSON from URL
-        loadTrafficData("https://raw.githubusercontent.com/jumana-farid/g12-capstone-/main/trafficPredictor.json");
+        // ✅ Updated to your raw JSON URL
+        loadTrafficData("https://raw.githubusercontent.com/jumana-farid/g12-capstone-/refs/heads/main/trafficPredictor.json");
 
-        // Timer to update traffic every 10 seconds
-        new Timer(10000, e -> nextTrafficState()).start();
+        // Update traffic overlay every 2 seconds for demo
+        new Timer(2000, e -> nextTrafficState()).start();
     }
 
     private void loadTrafficData(String urlStr) {
@@ -58,7 +56,6 @@ public class TrafficMap extends JPanel {
 
             trafficData = new JSONArray(sb.toString());
             applyTrafficState();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -103,11 +100,13 @@ public class TrafficMap extends JPanel {
         if (mapImage == null) return;
 
         Graphics2D g2 = (Graphics2D) g;
+
+        // Draw background image
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
         g2.drawImage(mapImage, 0, 0, getWidth(), getHeight(), null);
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
 
-        // Draw Road 1
+        // Fill UL1 shape
         Path2D road1Path = new Path2D.Double();
         road1Path.moveTo(scaleX(road1[0][0]), scaleY(road1[0][1]));
         for (int i = 1; i < road1.length; i++) {
@@ -117,7 +116,7 @@ public class TrafficMap extends JPanel {
         g2.setColor(getColor(UL1_status));
         g2.fill(road1Path);
 
-        // Draw Road 3
+        // Fill UL3 shape
         Path2D road3Path = new Path2D.Double();
         road3Path.moveTo(scaleX(road3[0][0]), scaleY(road3[0][1]));
         for (int i = 1; i < road3.length; i++) {
@@ -127,7 +126,7 @@ public class TrafficMap extends JPanel {
         g2.setColor(getColor(UL3_status));
         g2.fill(road3Path);
 
-        // Draw Intersection
+        // Fill intersection (UL2)
         double ix = intersection.x * getWidth() / BASE_WIDTH;
         double iy = intersection.y * getHeight() / BASE_HEIGHT;
         double irx = intersection.width * getWidth() / BASE_WIDTH;
@@ -137,11 +136,13 @@ public class TrafficMap extends JPanel {
     }
 
     public static void main(String[] args) {
-        JFrame frame = new JFrame("Traffic Map");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(new TrafficMap());
-        frame.pack();
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Traffic Map Overlay");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.add(new TrafficMap());
+            frame.pack();
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        });
     }
 }
