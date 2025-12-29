@@ -1,153 +1,96 @@
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.*;
-import java.awt.image.BufferedImage;
-import java.io.*;
-import java.net.*;
-import javax.imageio.ImageIO;
-import org.json.*;
+window.onload = function () {
+  const canvas = document.getElementById("tri-canvas");
+  const ctx = canvas.getContext("2d");
 
-public class TrafficMap extends JPanel {
+  const BASE_WIDTH = 700;
+  const BASE_HEIGHT = 450;
 
-    private BufferedImage mapImage;
-    private JSONArray trafficData;
-    private int currentIndex = 0;
+  const roads = {
+    road1: [[75,342],[253,126],[289,155],[137,341]],
+    road3: [[358,128],[314,160],[440,341],[532,340]]
+  };
 
-    private final int BASE_WIDTH = 700;
-    private final int BASE_HEIGHT = 450;
+  const intersection = {
+    x: (532 + 305) / 2,
+    y: (340 + 34) / 2,
+    radiusX: Math.abs(532 - 305) / 2,
+    radiusY: Math.abs(340 - 34) / 2
+  };
 
-    // Polygon coordinates
-    private final int[][] road1 = {{75,342},{253,126},{289,155},{137,341}};
-    private final int[][] road3 = {{358,128},{314,160},{440,341},{532,340}};
+  function getColor(status) {
+    switch(status) {
+      case "Occupied": return "rgba(255,0,0,0.5)";
+      case "In use": return "rgba(255,255,0,0.5)";
+      default: return "rgba(0,255,0,0.5)";
+    }
+  }
 
-    private final Ellipse2D.Double intersection = new Ellipse2D.Double(
-            (358 + 532)/2.0, (128 + 340)/2.0,
-            Math.abs(532 - 358), Math.abs(340 - 128)
-    );
+  async function loadTrafficData() {
+    try {
+      const response = await fetch('trafficPredictor.json');
+      const data = await response.json();
+      const latest = data[data.length - 1];
 
-    private String UL1_status = "Free";
-    private String UL2_status = "Free";
-    private String UL3_status = "Free";
-
-    public TrafficMap() {
-        setPreferredSize(new Dimension(BASE_WIDTH, BASE_HEIGHT));
-
-        try {
-            mapImage = ImageIO.read(new File("Triangular Object with Yellow Accents.png"));
-        } catch (IOException e) {
-            System.err.println("Image not found! Make sure it is in the project folder.");
+      Object.keys(latest).forEach(key => {
+        if (key.startsWith("UL")) {
+          window.triangleStatus[key] = latest[key];
         }
+      });
 
-        // ✅ Fixed GitHub raw JSON fetch
-        loadTrafficData("https://raw.githubusercontent.com/jumana-farid/g12-capstone-/refs/heads/main/trafficPredictor.json");
-
-        // Update traffic overlay every 2 seconds for demo
-        new Timer(2000, e -> nextTrafficState()).start();
+      drawMapAndRoads();
+    } catch(err) {
+      console.error("Failed to load traffic data:", err);
     }
+  }
 
-    private void loadTrafficData(String urlStr) {
-        try {
-            URL url = new URL(urlStr);
-            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) sb.append(line);
-            reader.close();
+  function resizeCanvas() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    drawMapAndRoads();
+  }
 
-            trafficData = new JSONArray(sb.toString());
-            System.out.println("Loaded JSON entries: " + trafficData.length());
-            applyTrafficState();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+  function scaleX(x) { return x * canvas.width / BASE_WIDTH; }
+  function scaleY(y) { return y * canvas.height / BASE_HEIGHT; }
 
-    private void applyTrafficState() {
-        if (trafficData == null || trafficData.length() == 0) return;
+  function drawMapAndRoads() {
+    const img = new Image();
+    img.src = "Triangular_Object_with_Yellow_Accents.png";
 
-        JSONObject state = trafficData.getJSONObject(currentIndex);
-        UL1_status = state.getString("UL1_status");
-        UL2_status = state.getString("UL2_status");
-        UL3_status = state.getString("UL3_status");
+    img.onload = function () {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = 0.4;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = 1;
 
-        System.out.println("UL1: " + UL1_status + ", UL2: " + UL2_status + ", UL3: " + UL3_status);
+      ctx.fillStyle = getColor(window.triangleStatus.UL1);
+      ctx.beginPath();
+      ctx.moveTo(scaleX(roads.road1[0][0]), scaleY(roads.road1[0][1]));
+      roads.road1.forEach(p => ctx.lineTo(scaleX(p[0]), scaleY(p[1])));
+      ctx.closePath();
+      ctx.fill();
 
-        repaint();
-    }
+      ctx.fillStyle = getColor(window.triangleStatus.UL3);
+      ctx.beginPath();
+      ctx.moveTo(scaleX(roads.road3[0][0]), scaleY(roads.road3[0][1]));
+      roads.road3.forEach(p => ctx.lineTo(scaleX(p[0]), scaleY(p[1])));
+      ctx.closePath();
+      ctx.fill();
 
-    private void nextTrafficState() {
-        currentIndex++;
-        if (currentIndex >= trafficData.length()) currentIndex = 0;
-        applyTrafficState();
-    }
+      ctx.fillStyle = getColor(window.triangleStatus.UL2);
+      ctx.beginPath();
+      ctx.ellipse(
+        scaleX(intersection.x),
+        scaleY(intersection.y),
+        intersection.radiusX * canvas.width / BASE_WIDTH,
+        intersection.radiusY * canvas.height / BASE_HEIGHT,
+        0, 0, Math.PI * 2
+      );
+      ctx.fill();
+    };
+  }
 
-    private Color getColor(String status) {
-        if (status == null) return new Color(0,255,0,255);
-        String s = status.toLowerCase();
-        if (s.contains("occupied")) return new Color(255,0,0,255);
-        if (s.contains("use")) return new Color(255,255,0,255);
-        return new Color(0,255,0,255);
-    }
-
-    private int scaleX(int x) {
-        return x * getWidth() / BASE_WIDTH;
-    }
-
-    private int scaleY(int y) {
-        return y * getHeight() / BASE_HEIGHT;
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        if (mapImage == null) return;
-
-        Graphics2D g2 = (Graphics2D) g;
-
-        // Draw background image
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
-        g2.drawImage(mapImage, 0, 0, getWidth(), getHeight(), null);
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-
-        // Fill UL1 shape
-        Path2D road1Path = new Path2D.Double();
-        road1Path.moveTo(scaleX(road1[0][0]), scaleY(road1[0][1]));
-        for (int i = 1; i < road1.length; i++) {
-            road1Path.lineTo(scaleX(road1[i][0]), scaleY(road1[i][1]));
-        }
-        road1Path.closePath();
-        g2.setColor(getColor(UL1_status));
-        g2.fill(road1Path);
-
-        // Fill UL3 shape
-        Path2D road3Path = new Path2D.Double();
-        road3Path.moveTo(scaleX(road3[0][0]), scaleY(road3[0][1]));
-        for (int i = 1; i < road3.length; i++) {
-            road3Path.lineTo(scaleX(road3[i][0]), scaleY(road3[i][1]));
-        }
-        road3Path.closePath();
-        g2.setColor(getColor(UL3_status));
-        g2.fill(road3Path);
-
-        // Fill intersection (UL2)
-        double ix = intersection.x * getWidth() / BASE_WIDTH;
-        double iy = intersection.y * getHeight() / BASE_HEIGHT;
-        double irx = intersection.width * getWidth() / BASE_WIDTH;
-        double iry = intersection.height * getHeight() / BASE_HEIGHT;
-        g2.setColor(getColor(UL2_status));
-        g2.fill(new Ellipse2D.Double(ix - irx/2, iy - iry/2, irx, iry));
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Traffic Map Overlay");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.add(new TrafficMap());
-            frame.pack();
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
-    }
-}
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+  loadTrafficData();
+  setInterval(loadTrafficData, 10000);
+};
