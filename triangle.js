@@ -20,41 +20,63 @@ window.onload = function () {
     radiusY: Math.abs(340 - 34) / 2
   };
 
-  // 🔹 STATUS OBJECT (filled from GitHub)
+  // CURRENT STATUS SHOWN ON MAP
   let triangleStatus = {
     UL1: "Free",
     UL2: "Free",
     UL3: "Free"
   };
 
+  // DATA PLAYBACK VARIABLES
+  let trafficData = [];
+  let currentIndex = 0;
+  let playbackTimer = null;
+
+  // COLOR LOGIC (handles long messages)
   function getColor(status) {
-    switch(status) {
-      case "Occupied": return "rgba(255,0,0,0.5)";
-      case "In use": return "rgba(255,255,0,0.5)";
-      default: return "rgba(0,255,0,0.5)";
-    }
+    if (!status) return "rgba(0,255,0,0.5)";
+    const s = status.toLowerCase();
+    if (s.includes("occupied")) return "rgba(255,0,0,0.5)";
+    if (s.includes("use")) return "rgba(255,255,0,0.5)";
+    return "rgba(0,255,0,0.5)";
   }
 
-  // 🔹 FETCH FROM GITHUB
+  // 🔹 LOAD JSON FROM GITHUB (RAW)
   function loadTrafficData() {
-    fetch("https://raw.githubusercontent.com/USERNAME/REPO/main/trafficpredictor.csv")
-      .then(res => res.text())
-      .then(text => {
-        // Expected CSV format:
-        // UL1,Occupied
-        // UL2,In use
-        // UL3,Free
+    fetch("https://raw.githubusercontent.com/jumana-farid/g12-capstone-/main/trafficPredictor.json")
+      .then(res => res.json())
+      .then(data => {
+        trafficData = data;
+        currentIndex = 0;
 
-        text.split("\n").forEach(line => {
-          const [key, value] = line.split(",");
-          if (key && value) {
-            triangleStatus[key.trim()] = value.trim();
-          }
-        });
+        applyTrafficState();
 
-        drawMapAndRoads();
+        if (playbackTimer) clearInterval(playbackTimer);
+        playbackTimer = setInterval(nextTrafficState, 10000); // 10 seconds
       })
       .catch(err => console.error("Traffic data error:", err));
+  }
+
+  // APPLY CURRENT STATE TO MAP
+  function applyTrafficState() {
+    if (!trafficData.length) return;
+
+    const state = trafficData[currentIndex];
+
+    triangleStatus = {
+      UL1: state.UL1_status,
+      UL2: state.UL2_status,
+      UL3: state.UL3_status
+    };
+
+    drawMapAndRoads();
+  }
+
+  // MOVE TO NEXT STATE
+  function nextTrafficState() {
+    currentIndex++;
+    if (currentIndex >= trafficData.length) currentIndex = 0;
+    applyTrafficState();
   }
 
   function resizeCanvas() {
@@ -124,5 +146,5 @@ window.onload = function () {
   window.addEventListener("resize", resizeCanvas);
 
   resizeCanvas();
-  loadTrafficData(); // 🔹 LOAD DATA ON START
+  loadTrafficData(); // 🚦 START PLAYBACK
 };
