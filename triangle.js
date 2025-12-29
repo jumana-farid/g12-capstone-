@@ -1,148 +1,180 @@
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.*;
-import java.awt.image.BufferedImage;
-import java.io.*;
-import java.net.*;
-import javax.imageio.ImageIO;
-import org.json.*;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mystery Machine Dashboard</title>
 
-public class TrafficMap extends JPanel {
-
-    private BufferedImage mapImage;
-    private JSONArray trafficData;
-    private int currentIndex = 0;
-
-    private final int BASE_WIDTH = 700;
-    private final int BASE_HEIGHT = 450;
-
-    // Polygon coordinates
-    private final int[][] road1 = {{75,342},{253,126},{289,155},{137,341}};
-    private final int[][] road3 = {{358,128},{314,160},{440,341},{532,340}};
-
-    private final Ellipse2D.Double intersection = new Ellipse2D.Double(
-            (358 + 532)/2.0, (128 + 340)/2.0,
-            Math.abs(532 - 358), Math.abs(340 - 128)
-    );
-
-    private String UL1_status = "Free";
-    private String UL2_status = "Free";
-    private String UL3_status = "Free";
-
-    public TrafficMap() {
-        setPreferredSize(new Dimension(BASE_WIDTH, BASE_HEIGHT));
-
-        try {
-            // Load image from GitHub directly
-            mapImage = ImageIO.read(new URL("https://raw.githubusercontent.com/jumana-farid/g12-capstone-/main/Triangular%20Object%20with%20Yellow%20Accents.png"));
-        } catch (IOException e) {
-            System.err.println("Image not found!");
-        }
-
-        // Load traffic JSON from GitHub
-        loadTrafficData("https://raw.githubusercontent.com/jumana-farid/g12-capstone-/main/trafficPredictor.json");
-
-        // Update traffic overlay every 2 seconds
-        new Timer(2000, e -> nextTrafficState()).start();
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: 'Comic Sans MS', 'Fredoka One', Arial, sans-serif;
+      height: 100%;
     }
 
-    private void loadTrafficData(String urlStr) {
-        try {
-            URL url = new URL(urlStr);
-            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) sb.append(line);
-            reader.close();
-
-            trafficData = new JSONArray(sb.toString());
-            System.out.println("Loaded JSON entries: " + trafficData.length());
-            applyTrafficState();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Failed to load traffic JSON. Coloring all red.");
-            // If JSON fails, set everything to "Occupied"
-            UL1_status = UL2_status = UL3_status = "Occupied";
-            repaint();
-        }
+    .hero {
+      position: relative;
+      height: 70vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff200;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+      overflow: hidden;
+      background: url('hero-background.jpg') no-repeat center center;
+      background-size: cover;
     }
 
-    private void applyTrafficState() {
-        if (trafficData == null || trafficData.length() == 0) return;
-
-        JSONObject state = trafficData.getJSONObject(currentIndex);
-        UL1_status = state.optString("UL1_status", "Occupied");
-        UL2_status = state.optString("UL2_status", "Occupied");
-        UL3_status = state.optString("UL3_status", "Occupied");
-
-        repaint();
+    .hero h1 {
+      position: relative;
+      font-size: 4rem;
+      z-index: 1;
     }
 
-    private void nextTrafficState() {
-        if (trafficData == null || trafficData.length() == 0) return;
-        currentIndex++;
-        if (currentIndex >= trafficData.length()) currentIndex = 0;
-        applyTrafficState();
+    .content {
+      padding: 20px;
+      text-align: center;
+      background:#1cb5ac; 
+      color:white;
+      border-top:8px solid #ff7f00;
+      border-bottom:8px solid #ff7f00;
     }
 
-    private Color getColor(String status) {
-        if (status == null) return new Color(0,255,0,255);
-        String s = status.toLowerCase();
-        if (s.contains("occupied")) return new Color(255,0,0,255);
-        if (s.contains("use")) return new Color(255,255,0,255);
-        return new Color(0,255,0,255);
+    #map {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
     }
 
-    private int scaleX(int x) { return x * getWidth() / BASE_WIDTH; }
-    private int scaleY(int y) { return y * getHeight() / BASE_HEIGHT; }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        if (mapImage == null) return;
-
-        Graphics2D g2 = (Graphics2D) g;
-
-        // Draw background image
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
-        g2.drawImage(mapImage, 0, 0, getWidth(), getHeight(), null);
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-
-        // Draw road1 (UL1)
-        Path2D road1Path = new Path2D.Double();
-        road1Path.moveTo(scaleX(road1[0][0]), scaleY(road1[0][1]));
-        for (int i = 1; i < road1.length; i++) road1Path.lineTo(scaleX(road1[i][0]), scaleY(road1[i][1]));
-        road1Path.closePath();
-        g2.setColor(getColor(UL1_status));
-        g2.fill(road1Path);
-
-        // Draw road3 (UL3)
-        Path2D road3Path = new Path2D.Double();
-        road3Path.moveTo(scaleX(road3[0][0]), scaleY(road3[0][1]));
-        for (int i = 1; i < road3.length; i++) road3Path.lineTo(scaleX(road3[i][0]), scaleY(road3[i][1]));
-        road3Path.closePath();
-        g2.setColor(getColor(UL3_status));
-        g2.fill(road3Path);
-
-        // Draw intersection (UL2)
-        double ix = intersection.x * getWidth() / BASE_WIDTH;
-        double iy = intersection.y * getHeight() / BASE_HEIGHT;
-        double irx = intersection.width * getWidth() / BASE_WIDTH;
-        double iry = intersection.height * getHeight() / BASE_HEIGHT;
-        g2.setColor(getColor(UL2_status));
-        g2.fill(new Ellipse2D.Double(ix - irx/2, iy - iry/2, irx, iry));
+    #map img {
+      display: block;
+      max-width: 100%;
+      height: auto;
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Traffic Map Overlay");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.add(new TrafficMap());
-            frame.pack();
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
+    #liveMap {
+      width: 100%;
+      height: 400px;
+      margin-top: 20px;
+      border: 4px solid #ff7f00;
+      border-radius: 10px;
     }
-}
+
+    #ai-container {
+      margin-top: 30px;
+      border: 3px solid #ff7f00;
+      padding: 20px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.1);
+      display: none;
+    }
+  </style>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- React + ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+
+  <!-- HERO SECTION -->
+  <div class="hero">
+    <h1>Mystery Machine Dashboard</h1>
+  </div>
+
+  <div class="content">
+    <h2>Map Status</h2>
+    <div style="display:flex; justify-content:center; gap:20px; margin-bottom:15px;">
+      <div style="display:flex; align-items:center; gap:5px;">
+        <div style="width:12px; height:12px; background:red; border-radius:50%;"></div>
+        <span>Congested right now</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:5px;">
+        <div style="width:12px; height:12px; background:orange; border-radius:50%;"></div>
+        <span>Most likely to congest</span>
+      </div>
+    </div>
+
+    <h2>Map</h2>
+    <div id="map">
+      <img src="Triangular_Object_with_Yellow_Accents-removebg-preview.png" alt="Uploaded Map Photo">
+    </div>
+
+    <h2>Live Map</h2>
+    <div id="liveMap"></div>
+
+    <h2>Green Lane Status</h2>
+    <div style="display:flex; justify-content:center; gap:20px; margin:15px 0;">
+      <div style="display:flex; align-items:center; gap:5px;">
+        <div style="width:12px; height:12px; background:black; border-radius:50%;"></div>
+        <span>Closed</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:5px;">
+        <div style="width:12px; height:12px; background:green; border-radius:50%;"></div>
+        <span>Open</span>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div style="margin-top:20px;">
+      <a href="https://weather.com" target="_blank" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; background:#ff7f00; color:white; font-weight:bold;">Go to Weather Website</a>
+      
+      <a href="#" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; margin-left:10px; background:#ff7f00; color:white; font-weight:bold;">Expected Earthquakes</a>
+      
+      <button id="show-ai" style="padding:15px 30px; font-size:1.2rem; border:2px solid orange; border-radius:8px; margin-left:10px; background:#ff7f00; color:white; font-weight:bold; cursor:pointer;">AI</button>
+    </div>
+
+    <!-- Container for AI React component -->
+    <div id="ai-container"></div>
+
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // LIVE MAP
+    var liveMap = L.map('liveMap').setView([30.0444, 31.2357], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(liveMap);
+    L.marker([30.0444, 31.2357]).addTo(liveMap).bindPopup("Center");
+    L.circle([30.043, 31.237], {radius: 200, color: "red"}).addTo(liveMap).bindPopup("Congested");
+    L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(liveMap).bindPopup("Free");
+  </script>
+
+  <!-- AI React Component -->
+  <script type="text/babel">
+    function TrafficPredictor() {
+      const [message, setMessage] = React.useState("Predicting traffic...");
+
+      return (
+        <div>
+          <h2>Traffic Predictor AI</h2>
+          <p>{message}</p>
+          <button onClick={() => setMessage("Traffic predicted successfully!")}>
+            Run Prediction
+          </button>
+        </div>
+      );
+    }
+
+    const aiContainer = document.getElementById("ai-container");
+
+    document.getElementById("show-ai").onclick = function() {
+      aiContainer.style.display = "block";
+      ReactDOM.createRoot(aiContainer).render(<TrafficPredictor />);
+      aiContainer.scrollIntoView({behavior: "smooth"});
+    };
+  </script>
+
+</body>
+</html>4
