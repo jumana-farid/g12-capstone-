@@ -71,6 +71,16 @@
       background: rgba(0,0,0,0.1);
       display: none;
     }
+
+    #tri-canvas {
+      width: 100%;
+      max-width: 700px;
+      height: 450px;
+      border: 3px solid #ff7f00;
+      border-radius: 10px;
+      margin: 20px auto;
+      display: block;
+    }
   </style>
 
   <!-- Leaflet CSS -->
@@ -85,7 +95,6 @@
 </head>
 <body>
 
-  <!-- HERO SECTION -->
   <div class="hero">
     <h1>Mystery Machine Dashboard</h1>
   </div>
@@ -115,60 +124,59 @@
     <h2>Live Map</h2>
     <div id="liveMap"></div>
 
-    <!-- Buttons -->
+    <!-- Canvas for AI traffic -->
+    <canvas id="tri-canvas"></canvas>
+
     <div style="margin-top:20px;">
       <a href="https://weather.com" target="_blank" style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; display:inline-block; background:#ff7f00; color:white; font-weight:bold;">Go to Weather Website</a>
       <button id="show-ai" style="padding:15px 30px; font-size:1.2rem; border:2px solid orange; border-radius:8px; margin-left:10px; background:#ff7f00; color:white; font-weight:bold; cursor:pointer;">AI</button>
     </div>
 
-    <!-- Container for AI React component -->
     <div id="ai-container"></div>
-
   </div>
 
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+  <!-- Global triangle status -->
   <script>
-    // =========================
-    // Live Map Setup
-    // =========================
+    window.triangleStatus = { UL1: "Free", UL2: "Free", UL3: "Free" };
+  </script>
+
+  <!-- Triangle JS -->
+  <script src="triangle.js"></script>
+
+  <!-- Live map JS -->
+  <script>
     var liveMap = L.map('liveMap').setView([30.0444, 31.2357], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(liveMap);
 
-    // Lane coordinates
     const lanes = {
       UL1: { lat: 30.043, lng: 31.237 },
       UL2: { lat: 30.046, lng: 31.236 },
       UL3: { lat: 30.045, lng: 31.238 }
     };
 
-    // Color mapping
     const colorMap = {
       "Free": "green",
       "In use": "orange",
-      "Occupied, please move to green lane": "red"
+      "Occupied": "red"
     };
 
-    // Layer group to clear old circles before redraw
     const laneLayerGroup = L.layerGroup().addTo(liveMap);
 
     async function updateTrafficMap() {
       try {
-        const response = await fetch('data.xlsx_lane_status.json'); // your AI output JSON
+        const response = await fetch('trafficPredictor.json');
         const data = await response.json();
 
-        // Clear previous lane markers
         laneLayerGroup.clearLayers();
-
-        // Take latest row
         const latest = data[data.length - 1];
 
         Object.keys(latest).forEach(key => {
-          if (key.endsWith("_status")) {
-            const ul = key.replace("_status","");
+          if (key.startsWith("UL")) {
+            const ul = key;
             const status = latest[key];
             const color = colorMap[status] || "black";
 
@@ -183,12 +191,11 @@
       }
     }
 
-    // Update map every 10 seconds
     updateTrafficMap();
     setInterval(updateTrafficMap, 10000);
   </script>
 
-  <!-- AI React Component -->
+  <!-- AI React component -->
   <script type="text/babel">
     function TrafficPredictor() {
       const [message, setMessage] = React.useState("Predicting traffic...");
@@ -196,9 +203,8 @@
       const runPrediction = async () => {
         setMessage("Predicting traffic...");
         try {
-          const response = await fetch('data.xlsx_lane_status.json');
-          const data = await response.json();
-          // Call map update
+          const response = await fetch('trafficPredictor.json');
+          await response.json();
           window.updateTrafficMap();
           setMessage("Traffic predicted successfully!");
         } catch(err) {
@@ -216,7 +222,6 @@
     }
 
     const aiContainer = document.getElementById("ai-container");
-
     document.getElementById("show-ai").onclick = function() {
       aiContainer.style.display = "block";
       ReactDOM.createRoot(aiContainer).render(<TrafficPredictor />);
