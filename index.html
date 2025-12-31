@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mystery Machine Dashboard</title>
+  <title>Mystery Machine Dashboard & Traffic Viewer</title>
 
   <style>
     body, html {
@@ -11,6 +11,7 @@
       padding: 0;
       font-family: 'Comic Sans MS', 'Fredoka One', Arial, sans-serif;
       height: 100%;
+      text-align: center;
     }
 
     .hero {
@@ -41,18 +42,12 @@
       border-bottom:8px solid #ff7f00;
     }
 
-    #map {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    #map img {
+    #map img, #trafficImage {
       display: block;
       max-width: 100%;
       height: auto;
+      margin: 0 auto;
+      border: 2px solid black;
     }
 
     #liveMap, #trafficCanvas {
@@ -113,6 +108,24 @@
       margin-left:0;
     }
 
+    /* Traffic buttons below the image */
+    .traffic-buttons {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    .traffic-buttons button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 5px;
+      border: 2px solid #ff7f00;
+      background: #ff7f00;
+      color: white;
+      font-weight: bold;
+    }
+
   </style>
 
   <!-- Leaflet CSS -->
@@ -133,6 +146,7 @@
   </div>
 
   <div class="content">
+    <!-- Status Legends -->
     <h2>Map Status</h2>
     <div class="status-legend">
       <div>
@@ -145,17 +159,21 @@
       </div>
     </div>
 
+    <!-- Map Image -->
     <h2>Map</h2>
     <div id="map">
       <img src="https://raw.githubusercontent.com/jumana-farid/g12-capstone-/main/Triangular_Object_with_Yellow_Accents-removebg-preview.png" alt="Uploaded Map Photo">
     </div>
 
+    <!-- Live Map -->
     <h2>Live Map</h2>
     <div id="liveMap"></div>
 
+    <!-- Traffic Overlay Canvas -->
     <h2>Traffic Overlay</h2>
     <canvas id="trafficCanvas"></canvas>
 
+    <!-- Green Lane Status -->
     <h2>Green Lane Status</h2>
     <div class="status-legend">
       <div>
@@ -166,6 +184,15 @@
         <div class="status-dot" style="background:green;"></div>
         <span>Open</span>
       </div>
+    </div>
+
+    <!-- Simple Traffic Image Viewer -->
+    <h2>Traffic Road Condition</h2>
+    <img id="trafficImage" src="images/traffic1.jpg" alt="Traffic condition">
+    <div class="traffic-buttons">
+      <button onclick="changeTraffic(1)">Low</button>
+      <button onclick="changeTraffic(10)">Medium</button>
+      <button onclick="changeTraffic(27)">Heavy</button>
     </div>
 
     <!-- Buttons -->
@@ -301,6 +328,21 @@
       ReactDOM.createRoot(aiContainer).render(<TrafficPredictor />);
       aiContainer.scrollIntoView({behavior: "smooth"});
     };
+  </script>
+
+  <!-- Simple Traffic Image Switcher -->
+  <script>
+    const trafficImage = document.getElementById('trafficImage');
+    function changeTraffic(value) {
+      // Change image based on value
+      if (value <= 5) {
+        trafficImage.src = 'images/traffic1.jpg';
+      } else if (value <= 20) {
+        trafficImage.src = 'images/traffic2.jpg';
+      } else {
+        trafficImage.src = 'images/traffic3.jpg';
+      }
+    }
   </script>
 
 </body>
