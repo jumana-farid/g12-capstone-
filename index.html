@@ -219,6 +219,77 @@
     L.marker([30.0444, 31.2357]).addTo(liveMap).bindPopup("Center");
     L.circle([30.043, 31.237], {radius: 200, color: "red"}).addTo(liveMap).bindPopup("Congested");
     L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(liveMap).bindPopup("Free");
+
+
+
+  
+/* ===============================
+   27-COMBINATION IMAGE DISPLAYER
+   =============================== */
+
+const TRAFFIC_JSON_URL =
+  "https://raw.githubusercontent.com/jumana-farid/g12-capstone-/main/trafficPredictor.json";
+
+const trafficImageEl = document.getElementById("trafficImage");
+
+let predictionIndex = 0;
+let predictions = [];
+
+// Convert status text to number
+function statusToNumber(status) {
+  if (!status) return 0;
+  status = status.toLowerCase();
+  if (status.includes("occupied")) return 2;
+  if (status.includes("use")) return 1;
+  return 0; // Free
+}
+
+// Convert 3 road states to image number (1–27)
+function getImageNumber(ul1, ul2, ul3) {
+  return ul1 * 9 + ul2 * 3 + ul3 + 1;
+}
+
+// Show one prediction
+function showPrediction() {
+  if (predictions.length === 0) return;
+
+  const p = predictions[predictionIndex];
+
+  const UL1 = statusToNumber(p.UL1_status);
+  const UL2 = statusToNumber(p.UL2_status);
+  const UL3 = statusToNumber(p.UL3_status);
+
+  const imageNumber = getImageNumber(UL1, UL2, UL3);
+
+  // Display corresponding image
+  trafficImageEl.src = `images/${imageNumber}.png`;
+
+  // Move to next prediction (loop)
+  predictionIndex = (predictionIndex + 1) % predictions.length;
+}
+
+// Load predictions and start loop
+async function startTrafficImageSequence() {
+  try {
+    const res = await fetch(TRAFFIC_JSON_URL);
+    predictions = await res.json();
+
+    // Show first immediately
+    showPrediction();
+
+    // Then every 10 seconds
+    setInterval(showPrediction, 10000);
+
+  } catch (err) {
+    console.error("Failed to load trafficPredictor.json", err);
+    trafficImageEl.src = "images/27.png"; // fallback
+  }
+}
+
+// Start when page loads
+window.addEventListener("load", startTrafficImageSequence);
+
+
   </script>
 
   <!-- Traffic Overlay Canvas -->
