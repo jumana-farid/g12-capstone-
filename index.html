@@ -63,7 +63,7 @@
   <div class="content">
 
     <!-- Traffic Image -->
-    <img id="trafficImage" src="images/1.png" style="max-width:100%; border:3px solid black;">
+    <img id="trafficImage" src="1.png" style="max-width:100%; border:3px solid black;">
 
     <script>
       // Railway AI model endpoint
@@ -113,7 +113,7 @@
           const predictions = await res.json();
 
           if (!predictions || predictions.length === 0) {
-            trafficImageEl.src = "images/27.png";
+            trafficImageEl.src = "27.png";
             return;
           }
 
@@ -124,13 +124,13 @@
           const UL3 = statusToNumber(p.UL3_status);
 
           const imageNumber = getImageNumber(UL1, UL2, UL3);
-          trafficImageEl.src = `images/${imageNumber}.png`;
+          trafficImageEl.src = `${imageNumber}.png`;
 
           updateAICircles(p);
 
         } catch (err) {
           console.error("Failed to fetch AI data", err);
-          trafficImageEl.src = "images/27.png";
+          trafficImageEl.src = "27.png";
         }
       }
 
