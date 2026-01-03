@@ -76,6 +76,24 @@
 
   <div class="content">
 
+    <h2>Map Status</h2>
+    <div style="display:flex; justify-content:center; gap:20px; margin-bottom:15px;">
+      <div style="display:flex; align-items:center; gap:5px;">
+        <div style="width:12px; height:12px; background:red; border-radius:50%;"></div>
+        <span>Congested right now</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:5px;">
+        <div style="width:12px; height:12px; background:orange; border-radius:50%;"></div>
+        <span>Most likely to congest</span>
+      </div>
+    </div>
+
+    <!-- ===============================
+         27-COMBINATION IMAGE DISPLAYER
+         =============================== -->
+
+    <img id="trafficImage" src="images/1.png" style="max-width:100%; border:3px solid black;">
+
     <script>
       // LINK TO YOUR RAILWAY AI MODEL
       const TRAFFIC_API_URL = "https://fastapi-example-production-29f9.up.railway.app/";
@@ -152,11 +170,23 @@
       window.addEventListener("load", startTrafficImageSequence);
     </script>
 
-    
+    <h2>Map</h2>
+    <div id="map">
+      <img src="Triangular_Object_with_Yellow_Accents-removebg-preview.png" alt="Uploaded Map Photo">
+    </div>
 
     <h2>Live Map</h2>
     <div id="liveMap"></div>
 
+    <h2>Green Lane Status</h2>
+    <div style="display:flex; justify-content:center; gap:20px; margin:15px 0;">
+      <div style="display:flex; align-items:center; gap:5px;">
+        <div style="width:12px; height:12px; background:black; border-radius:50%;"></div>
+        <span>Closed</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:5px;">
+        <div style="width:12px; height:12px; background:green; border-radius:50%;"></div>
+        <span>Open</span>
       </div>
     </div>
 
@@ -178,7 +208,16 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  
+  <script>
+    var liveMap = L.map('liveMap').setView([30.0444, 31.2357], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(liveMap);
+
+    L.marker([30.0444, 31.2357]).addTo(liveMap).bindPopup("Center");
+    L.circle([30.043, 31.237], {radius: 200, color: "red"}).addTo(liveMap).bindPopup("Congested");
+    L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(liveMap).bindPopup("Free");
+  </script>
 
 </body>
 </html>
