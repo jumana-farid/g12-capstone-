@@ -95,8 +95,8 @@
     <img id="trafficImage" src="images/1.png" style="max-width:100%; border:3px solid black;">
 
     <script>
-      const TRAFFIC_JSON_URL =
-        "https://raw.githubusercontent.com/jumana-farid/g12-capstone-/main/trafficPredictor.json";
+      // LINK TO YOUR RAILWAY AI MODEL
+      const TRAFFIC_API_URL = "https://fastapi-example-production-29f9.up.railway.app/";
 
       const trafficImageEl = document.getElementById("trafficImage");
       let predictionIndex = 0;
@@ -126,18 +126,44 @@
         const imageNumber = getImageNumber(UL1, UL2, UL3);
         trafficImageEl.src = `images/${imageNumber}.png`;
 
+        // Optional: update live map circles if needed
+        if (p.UL1_status_circle && window.liveMap) {
+          liveMap.eachLayer(layer => {
+            if (layer.options && layer.options.customID) {
+              liveMap.removeLayer(layer);
+            }
+          });
+
+          // Example: create circles dynamically based on AI data
+          if (p.UL1_status_circle === "occupied") {
+            L.circle([30.043, 31.237], {radius: 200, color: "red", customID:true}).addTo(liveMap).bindPopup("UL1 Congested");
+          } else {
+            L.circle([30.043, 31.237], {radius: 200, color: "green", customID:true}).addTo(liveMap).bindPopup("UL1 Free");
+          }
+          if (p.UL2_status_circle === "occupied") {
+            L.circle([30.046, 31.236], {radius: 200, color: "red", customID:true}).addTo(liveMap).bindPopup("UL2 Congested");
+          } else {
+            L.circle([30.046, 31.236], {radius: 200, color: "green", customID:true}).addTo(liveMap).bindPopup("UL2 Free");
+          }
+          if (p.UL3_status_circle === "occupied") {
+            L.circle([30.045, 31.238], {radius: 200, color: "red", customID:true}).addTo(liveMap).bindPopup("UL3 Congested");
+          } else {
+            L.circle([30.045, 31.238], {radius: 200, color: "green", customID:true}).addTo(liveMap).bindPopup("UL3 Free");
+          }
+        }
+
         predictionIndex = (predictionIndex + 1) % predictions.length;
       }
 
       async function startTrafficImageSequence() {
         try {
-          const res = await fetch(TRAFFIC_JSON_URL);
-          predictions = await res.json();
+          const res = await fetch(TRAFFIC_API_URL);
+          predictions = await res.json();  // Your AI should return JSON array similar to previous format
           showPrediction();
-          setInterval(showPrediction, 10000);
+          setInterval(showPrediction, 10000); // update every 10 seconds
         } catch (err) {
-          console.error("Failed to load trafficPredictor.json", err);
-          trafficImageEl.src = "images/27.png";
+          console.error("Failed to fetch data from AI model", err);
+          trafficImageEl.src = "images/27.png"; // fallback image
         }
       }
 
