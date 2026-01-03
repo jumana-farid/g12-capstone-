@@ -41,20 +41,6 @@
       border-bottom:8px solid #ff7f00;
     }
 
-    #map {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    #map img {
-      display: block;
-      max-width: 100%;
-      height: auto;
-    }
-
     #liveMap {
       width: 100%;
       height: 400px;
@@ -76,31 +62,17 @@
 
   <div class="content">
 
-    <h2>Map Status</h2>
-    <div style="display:flex; justify-content:center; gap:20px; margin-bottom:15px;">
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:red; border-radius:50%;"></div>
-        <span>Congested right now</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:orange; border-radius:50%;"></div>
-        <span>Most likely to congest</span>
-      </div>
-    </div>
-
-    <!-- ===============================
-         27-COMBINATION IMAGE DISPLAYER
-         =============================== -->
-
+    <!-- Traffic Image -->
     <img id="trafficImage" src="images/1.png" style="max-width:100%; border:3px solid black;">
 
     <script>
-      // LINK TO YOUR RAILWAY AI MODEL
+      // Railway AI model endpoint
       const TRAFFIC_API_URL = "https://fastapi-example-production-29f9.up.railway.app/";
 
       const trafficImageEl = document.getElementById("trafficImage");
       let predictionIndex = 0;
       let predictions = [];
+      let aiCircles = []; // store AI-added circles for cleanup
 
       function statusToNumber(status) {
         if (!status) return 0;
@@ -112,6 +84,29 @@
 
       function getImageNumber(ul1, ul2, ul3) {
         return ul1 * 9 + ul2 * 3 + ul3 + 1;
+      }
+
+      function updateAICircles(p) {
+        if (!window.liveMap) return;
+
+        // remove previous AI circles
+        aiCircles.forEach(c => liveMap.removeLayer(c));
+        aiCircles = [];
+
+        // dynamically add circles based on AI data
+        const circleData = [
+          {status: p.UL1_status_circle, coords: [30.043, 31.237], label: "UL1"},
+          {status: p.UL2_status_circle, coords: [30.046, 31.236], label: "UL2"},
+          {status: p.UL3_status_circle, coords: [30.045, 31.238], label: "UL3"},
+        ];
+
+        circleData.forEach(cd => {
+          if (cd.status) {
+            const color = cd.status.toLowerCase() === "occupied" ? "red" : "green";
+            const circle = L.circle(cd.coords, {radius:200, color: color}).addTo(liveMap).bindPopup(`${cd.label} ${cd.status}`);
+            aiCircles.push(circle);
+          }
+        });
       }
 
       function showPrediction() {
@@ -126,31 +121,8 @@
         const imageNumber = getImageNumber(UL1, UL2, UL3);
         trafficImageEl.src = `images/${imageNumber}.png`;
 
-        // Optional: update live map circles if needed
-        if (p.UL1_status_circle && window.liveMap) {
-          liveMap.eachLayer(layer => {
-            if (layer.options && layer.options.customID) {
-              liveMap.removeLayer(layer);
-            }
-          });
-
-          // Example: create circles dynamically based on AI data
-          if (p.UL1_status_circle === "occupied") {
-            L.circle([30.043, 31.237], {radius: 200, color: "red", customID:true}).addTo(liveMap).bindPopup("UL1 Congested");
-          } else {
-            L.circle([30.043, 31.237], {radius: 200, color: "green", customID:true}).addTo(liveMap).bindPopup("UL1 Free");
-          }
-          if (p.UL2_status_circle === "occupied") {
-            L.circle([30.046, 31.236], {radius: 200, color: "red", customID:true}).addTo(liveMap).bindPopup("UL2 Congested");
-          } else {
-            L.circle([30.046, 31.236], {radius: 200, color: "green", customID:true}).addTo(liveMap).bindPopup("UL2 Free");
-          }
-          if (p.UL3_status_circle === "occupied") {
-            L.circle([30.045, 31.238], {radius: 200, color: "red", customID:true}).addTo(liveMap).bindPopup("UL3 Congested");
-          } else {
-            L.circle([30.045, 31.238], {radius: 200, color: "green", customID:true}).addTo(liveMap).bindPopup("UL3 Free");
-          }
-        }
+        // Update AI map circles
+        updateAICircles(p);
 
         predictionIndex = (predictionIndex + 1) % predictions.length;
       }
@@ -158,37 +130,20 @@
       async function startTrafficImageSequence() {
         try {
           const res = await fetch(TRAFFIC_API_URL);
-          predictions = await res.json();  // Your AI should return JSON array similar to previous format
+          predictions = await res.json();
           showPrediction();
-          setInterval(showPrediction, 10000); // update every 10 seconds
+          setInterval(showPrediction, 10000);
         } catch (err) {
-          console.error("Failed to fetch data from AI model", err);
-          trafficImageEl.src = "images/27.png"; // fallback image
+          console.error("Failed to fetch AI data", err);
+          trafficImageEl.src = "images/27.png";
         }
       }
 
       window.addEventListener("load", startTrafficImageSequence);
     </script>
 
-    <h2>Map</h2>
-    <div id="map">
-      <img src="Triangular_Object_with_Yellow_Accents-removebg-preview.png" alt="Uploaded Map Photo">
-    </div>
-
     <h2>Live Map</h2>
     <div id="liveMap"></div>
-
-    <h2>Green Lane Status</h2>
-    <div style="display:flex; justify-content:center; gap:20px; margin:15px 0;">
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:black; border-radius:50%;"></div>
-        <span>Closed</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:5px;">
-        <div style="width:12px; height:12px; background:green; border-radius:50%;"></div>
-        <span>Open</span>
-      </div>
-    </div>
 
     <!-- Buttons -->
     <div style="margin-top:20px;">
@@ -221,3 +176,4 @@
 
 </body>
 </html>
+
