@@ -70,6 +70,8 @@
       const TRAFFIC_API_URL = "https://fastapi-example-production-29f9.up.railway.app/predict";
 
       const trafficImageEl = document.getElementById("trafficImage");
+      let predictionIndex = 0;
+      let predictions = [];
       let aiCircles = []; // store AI-added circles for cleanup
 
       // Convert AI status string to number: Free=0, In use=1, Occupied=2
@@ -81,23 +83,57 @@
         return 0;
       }
 
-      // Calculate image number from UL1, UL2, UL3 numbers
-      function getImageNumber(ul1, ul2, ul3) {
-        return ul1 * 9 + ul2 * 3 + ul3 + 1; // gives 1-27
+      // Explicit mapping of 27 conditions to images
+      const imageConditions = [
+        {UL1:0, UL2:0, UL3:0}, // 1. Free | Free | Free
+        {UL1:0, UL2:0, UL3:1}, // 2. Free | Free | In use
+        {UL1:0, UL2:0, UL3:2}, // 3. Free | Free | Occupied
+        {UL1:0, UL2:1, UL3:0}, // 4. Free | In use | Free
+        {UL1:0, UL2:1, UL3:1}, // 5. Free | In use | In use
+        {UL1:0, UL2:1, UL3:2}, // 6. Free | In use | Occupied
+        {UL1:0, UL2:2, UL3:0}, // 7. Free | Occupied | Free
+        {UL1:0, UL2:2, UL3:1}, // 8. Free | Occupied | In use
+        {UL1:0, UL2:2, UL3:2}, // 9. Free | Occupied | Occupied
+        {UL1:1, UL2:0, UL3:0}, // 10. In use | Free | Free
+        {UL1:1, UL2:0, UL3:1}, // 11. In use | Free | In use
+        {UL1:1, UL2:0, UL3:2}, // 12. In use | Free | Occupied
+        {UL1:1, UL2:1, UL3:0}, // 13. In use | In use | Free
+        {UL1:1, UL2:1, UL3:1}, // 14. In use | In use | In use
+        {UL1:1, UL2:1, UL3:2}, // 15. In use | In use | Occupied
+        {UL1:1, UL2:2, UL3:0}, // 16. In use | Occupied | Free
+        {UL1:1, UL2:2, UL3:1}, // 17. In use | Occupied | In use
+        {UL1:1, UL2:2, UL3:2}, // 18. In use | Occupied | Occupied
+        {UL1:2, UL2:0, UL3:0}, // 19. Occupied | Free | Free
+        {UL1:2, UL2:0, UL3:1}, // 20. Occupied | Free | In use
+        {UL1:2, UL2:0, UL3:2}, // 21. Occupied | Free | Occupied
+        {UL1:2, UL2:1, UL3:0}, // 22. Occupied | In use | Free
+        {UL1:2, UL2:1, UL3:1}, // 23. Occupied | In use | In use
+        {UL1:2, UL2:1, UL3:2}, // 24. Occupied | In use | Occupied
+        {UL1:2, UL2:2, UL3:0}, // 25. Occupied | Occupied | Free
+        {UL1:2, UL2:2, UL3:1}, // 26. Occupied | Occupied | In use
+        {UL1:2, UL2:2, UL3:2}  // 27. Occupied | Occupied | Occupied
+      ];
+
+      // Function to find which image matches the AI result
+      function findImageNumber(ul1, ul2, ul3) {
+        for (let i = 0; i < imageConditions.length; i++) {
+          const c = imageConditions[i];
+          if (c.UL1 === ul1 && c.UL2 === ul2 && c.UL3 === ul3) return i + 1;
+        }
+        return 1; // fallback to 1.png if no match
       }
 
-      // Update liveMap circles based on AI status
       function updateAICircles(p) {
         if (!window.liveMap) return;
 
-        // Remove previous circles
+        // remove previous AI circles
         aiCircles.forEach(c => liveMap.removeLayer(c));
         aiCircles = [];
 
         const circleData = [
           {status: p.UL1_status, coords: [30.043, 31.237], label: "UL1"},
           {status: p.UL2_status, coords: [30.046, 31.236], label: "UL2"},
-          {status: p.UL3_status, coords: [30.045, 31.238], label: "UL3"}
+          {status: p.UL3_status, coords: [30.045, 31.238], label: "UL3"},
         ];
 
         circleData.forEach(cd => {
@@ -111,41 +147,41 @@
         });
       }
 
-      // Fetch AI data and update traffic image
-      async function updateTrafficImage() {
+      function showPrediction() {
+        if (predictions.length === 0) return;
+
+        const p = predictions[predictionIndex];
+
+        const UL1 = statusToNumber(p.UL1_status);
+        const UL2 = statusToNumber(p.UL2_status);
+        const UL3 = statusToNumber(p.UL3_status);
+
+        const imageNumber = findImageNumber(UL1, UL2, UL3);
+        trafficImageEl.src = `images/${imageNumber}.png`;
+
+        // Update live map circles
+        updateAICircles(p);
+
+        predictionIndex = (predictionIndex + 1) % predictions.length;
+      }
+
+      async function startTrafficImageSequence() {
         try {
           const res = await fetch(TRAFFIC_API_URL);
-          const predictions = await res.json();
-
-          if (!predictions || predictions.length === 0) {
-            trafficImageEl.src = "images/27.png"; // fallback
+          predictions = await res.json();
+          if (!Array.isArray(predictions) || predictions.length === 0) {
+            trafficImageEl.src = "images/1.png";
             return;
           }
-
-          // Pick the first row from AI data (or implement averaging if needed)
-          const p = predictions[0];
-
-          const UL1 = statusToNumber(p.UL1_status);
-          const UL2 = statusToNumber(p.UL2_status);
-          const UL3 = statusToNumber(p.UL3_status);
-
-          const imageNumber = getImageNumber(UL1, UL2, UL3);
-          trafficImageEl.src = `images/${imageNumber}.png`;
-
-          // Update live map circles
-          updateAICircles(p);
-
+          showPrediction();
+          setInterval(showPrediction, 10000);
         } catch (err) {
           console.error("Failed to fetch AI data", err);
-          trafficImageEl.src = "images/27.png"; // fallback image
+          trafficImageEl.src = "images/1.png"; // fallback
         }
       }
 
-      // Run every 10 seconds
-      window.addEventListener("load", () => {
-        updateTrafficImage(); // initial load
-        setInterval(updateTrafficImage, 10000); // update every 10 seconds
-      });
+      window.addEventListener("load", startTrafficImageSequence);
     </script>
 
     <h2>Live Map</h2>
