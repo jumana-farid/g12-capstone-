@@ -70,11 +70,8 @@
       const TRAFFIC_API_URL = "https://fastapi-example-production-29f9.up.railway.app/predict";
 
       const trafficImageEl = document.getElementById("trafficImage");
-      let predictionIndex = 0;
-      let predictions = [];
       let aiCircles = [];
 
-      // Convert AI status string to number: Free=0, In use=1, Occupied=2
       function statusToNumber(status) {
         if (!status) return 0;
         status = status.toLowerCase();
@@ -83,25 +80,8 @@
         return 0;
       }
 
-      // Explicit mapping of 27 conditions to images
-      const imageConditions = [
-        {UL1:0, UL2:0, UL3:0}, {UL1:0, UL2:0, UL3:1}, {UL1:0, UL2:0, UL3:2},
-        {UL1:0, UL2:1, UL3:0}, {UL1:0, UL2:1, UL3:1}, {UL1:0, UL2:1, UL3:2},
-        {UL1:0, UL2:2, UL3:0}, {UL1:0, UL2:2, UL3:1}, {UL1:0, UL2:2, UL3:2},
-        {UL1:1, UL2:0, UL3:0}, {UL1:1, UL2:0, UL3:1}, {UL1:1, UL2:0, UL3:2},
-        {UL1:1, UL2:1, UL3:0}, {UL1:1, UL2:1, UL3:1}, {UL1:1, UL2:1, UL3:2},
-        {UL1:1, UL2:2, UL3:0}, {UL1:1, UL2:2, UL3:1}, {UL1:1, UL2:2, UL3:2},
-        {UL1:2, UL2:0, UL3:0}, {UL1:2, UL2:0, UL3:1}, {UL1:2, UL2:0, UL3:2},
-        {UL1:2, UL2:1, UL3:0}, {UL1:2, UL2:1, UL3:1}, {UL1:2, UL2:1, UL3:2},
-        {UL1:2, UL2:2, UL3:0}, {UL1:2, UL2:2, UL3:1}, {UL1:2, UL2:2, UL3:2}
-      ];
-
-      function findImageNumber(ul1, ul2, ul3) {
-        for (let i = 0; i < imageConditions.length; i++) {
-          const c = imageConditions[i];
-          if (c.UL1 === ul1 && c.UL2 === ul2 && c.UL3 === ul3) return i + 1;
-        }
-        return 1; // fallback to 1.png
+      function getImageNumber(ul1, ul2, ul3) {
+        return ul1 * 9 + ul2 * 3 + ul3 + 1;
       }
 
       function updateAICircles(p) {
@@ -113,72 +93,57 @@
         const circleData = [
           {status: p.UL1_status, coords: [30.043, 31.237], label: "UL1"},
           {status: p.UL2_status, coords: [30.046, 31.236], label: "UL2"},
-          {status: p.UL3_status, coords: [30.045, 31.238], label: "UL3"},
+          {status: p.UL3_status, coords: [30.045, 31.238], label: "UL3"}
         ];
 
         circleData.forEach(cd => {
           if (cd.status) {
             const color = cd.status.toLowerCase().includes("occupied") ? "red" : "green";
             const circle = L.circle(cd.coords, {radius:200, color: color})
-                            .addTo(liveMap)
-                            .bindPopup(`${cd.label}: ${cd.status}`);
+              .addTo(liveMap)
+              .bindPopup(`${cd.label}: ${cd.status}`);
             aiCircles.push(circle);
           }
         });
       }
 
-      function showPrediction() {
-        if (!predictions || predictions.length === 0) {
-          trafficImageEl.src = "images/1.png";
-          return;
-        }
-
-        const p = predictions[predictionIndex];
-        if (!p) {
-          trafficImageEl.src = "images/1.png";
-          return;
-        }
-
-        const UL1 = statusToNumber(p.UL1_status);
-        const UL2 = statusToNumber(p.UL2_status);
-        const UL3 = statusToNumber(p.UL3_status);
-
-        const imageNumber = findImageNumber(UL1, UL2, UL3);
-        trafficImageEl.src = `images/${imageNumber}.png`;
-
-        updateAICircles(p);
-
-        predictionIndex = (predictionIndex + 1) % predictions.length;
-      }
-
-      async function startTrafficImageSequence() {
+      async function updateTrafficImage() {
         try {
           const res = await fetch(TRAFFIC_API_URL);
-          const data = await res.json();
+          const predictions = await res.json();
 
-          if (!Array.isArray(data) || data.length === 0) {
-            trafficImageEl.src = "images/1.png";
+          if (!predictions || predictions.length === 0) {
+            trafficImageEl.src = "images/27.png";
             return;
           }
 
-          predictions = data;
+          const p = predictions[0];
 
-          showPrediction();
-          setInterval(showPrediction, 10000);
+          const UL1 = statusToNumber(p.UL1_status);
+          const UL2 = statusToNumber(p.UL2_status);
+          const UL3 = statusToNumber(p.UL3_status);
+
+          const imageNumber = getImageNumber(UL1, UL2, UL3);
+          trafficImageEl.src = `images/${imageNumber}.png`;
+
+          updateAICircles(p);
 
         } catch (err) {
           console.error("Failed to fetch AI data", err);
-          trafficImageEl.src = "images/1.png";
+          trafficImageEl.src = "images/27.png";
         }
       }
 
-      window.addEventListener("load", startTrafficImageSequence);
+      window.addEventListener("load", () => {
+        updateTrafficImage();
+        setInterval(updateTrafficImage, 10000);
+      });
     </script>
 
     <h2>Live Map</h2>
     <div id="liveMap"></div>
 
-    <!-- Traffic Legend under Live Map -->
+    <!-- Traffic Legend -->
     <div style="display:flex; flex-direction:column; align-items:center; margin-top:10px;">
       <div style="width:200px; height:20px; background: linear-gradient(to right, red, white); border:1px solid black; border-radius:5px;"></div>
       <div style="width:200px; display:flex; justify-content:space-between; font-weight:bold; margin-top:5px;">
@@ -194,10 +159,29 @@
         Go to Weather Website
       </a>
 
-      <a href="#"
-         style="padding:15px 30px; font-size:1.2rem; text-decoration:none; border:2px solid orange; border-radius:8px; margin-left:10px; background:#ff7f00; color:white; font-weight:bold;">
+      <button onclick="toggleEarthquake()"
+         style="padding:15px 30px; font-size:1.2rem; border:2px solid orange; border-radius:8px; margin-left:10px; background:#ff7f00; color:white; font-weight:bold; cursor:pointer;">
         Expected Earthquakes
-      </a>
+      </button>
+    </div>
+
+    <!-- Earthquake Section -->
+    <div id="earthquakeResult" style="display:none; margin-top:30px;">
+      <p style="font-size:1.3rem; font-weight:bold;">
+        No expected earthquakes
+      </p>
+
+      <img src="graph.png"
+           alt="Earthquake graph"
+           style="max-width:90%; border:4px solid black; border-radius:10px; margin-top:10px;">
+
+      <p style="margin-top:15px;">
+        <a href="https://wokwi.com/projects/439746018884760577"
+           target="_blank"
+           style="color:white; font-weight:bold; text-decoration:underline;">
+          View simulation on Wokwi
+        </a>
+      </p>
     </div>
 
   </div>
@@ -214,6 +198,11 @@
     L.marker([30.0444, 31.2357]).addTo(liveMap).bindPopup("Center");
     L.circle([30.043, 31.237], {radius: 200, color: "red"}).addTo(liveMap).bindPopup("Congested");
     L.circle([30.046, 31.236], {radius: 200, color: "green"}).addTo(liveMap).bindPopup("Free");
+
+    function toggleEarthquake() {
+      const div = document.getElementById("earthquakeResult");
+      div.style.display = div.style.display === "none" ? "block" : "none";
+    }
   </script>
 
 </body>
