@@ -78,25 +78,20 @@
     }
   </style>
 
-  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
 
-  <!-- HERO SECTION -->
   <div class="hero">
     <h1>ViaSentis</h1>
   </div>
 
   <div class="content">
 
-    <!-- AI TEXT ABOVE IMAGE -->
     <h2>AI Predictions Represented on the Map</h2>
 
-    <!-- Traffic Image (NO BLACK BORDER) -->
     <img id="trafficImage" src="1.png" style="max-width:100%;">
 
-    <!-- COLOR LEGEND -->
     <div style="margin-top:20px;">
       <div class="legend-row">
         <span class="circle red"></span>
@@ -114,10 +109,18 @@
       </div>
     </div>
 
-    <!-- BIG WARNING MESSAGE -->
     <div class="big-warning">
       IF YOU SEE THAT THE ROAD YOU WANT IS RED, PLEASE USE THE GREEN LANE OR A ROAD THAT IS NOT RED.  
       IF YOU ARE IN A ROAD THAT IS ALREADY RED, PLEASE DO NOT MOVE TO ANOTHER LANE.
+    </div>
+
+    <!-- LIVE READINGS BUTTON (NEW) -->
+    <div style="margin-top:30px;">
+      <h2>Click here to view live readings</h2>
+      <button onclick="window.open('http://192.168.137.31/', '_blank')"
+        style="padding:15px 30px; font-size:1.2rem; border:2px solid orange; border-radius:8px; background:#ff7f00; color:white; font-weight:bold; cursor:pointer;">
+        Open Live Readings
+      </button>
     </div>
 
     <script>
@@ -210,9 +213,7 @@
 
     <div id="earthquakeResult" style="display:none; margin-top:30px;">
       <p style="font-size:1.3rem; font-weight:bold;">No expected earthquakes</p>
-
       <img src="graph.png" style="max-width:90%; border-radius:10px;">
-
       <p style="margin-top:15px;">
         <a href="https://wokwi.com/projects/439746018884760577"
            target="_blank"
