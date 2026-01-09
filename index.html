@@ -116,7 +116,7 @@
 
     <div style="margin-top:30px;">
       <h2>Click here to view live readings</h2>
-      <button onclick="window.open('http://192.168.137.31/', '_blank')"
+      <button onclick="window.open('http://192.168.137.9/', '_blank')"
         style="padding:15px 30px; font-size:1.2rem; border:2px solid orange; border-radius:8px; background:#ff7f00; color:white; font-weight:bold; cursor:pointer;">
         Open Live Readings
       </button>
@@ -124,63 +124,59 @@
 
     <!-- ✅ FIXED AI IMAGE LOGIC -->
     <script>
-     <script>
-  const TRAFFIC_API_URL = "https://fastapi-example-production-29f9.up.railway.app/predict";
-  const trafficImageEl = document.getElementById("trafficImage");
+      const TRAFFIC_API_URL = "https://fastapi-example-production-29f9.up.railway.app/predict";
+      const trafficImageEl = document.getElementById("trafficImage");
 
-  // Free = 0, In Use = 1, Occupied = 2
-  function statusToNumber(status) {
-    if (!status) return null;
-    status = status.toLowerCase();
+      function statusToNumber(status) {
+        if (!status) return null;
+        status = status.toLowerCase();
 
-    if (status.includes("free")) return 0;
-    if (status.includes("use")) return 1;
-    if (status.includes("occupied")) return 2;
+        if (status.includes("free")) return 0;
+        if (status.includes("use")) return 1;
+        if (status.includes("occupied")) return 2;
 
-    return null;
-  }
-
-  // Convert 3 states into image number (1–27)
-  function getImageNumber(r1, inter, r2) {
-    return r1 * 9 + inter * 3 + r2 + 1;
-  }
-
-  async function updateTrafficImage() {
-    try {
-      const res = await fetch(TRAFFIC_API_URL);
-      const prediction = await res.json();   // ONE object, not a list
-
-      if (!prediction) {
-        trafficImageEl.src = "25.png";
-        return;
+        return null;
       }
 
-      const UL1 = statusToNumber(prediction.UL1_status);
-      const UL2 = statusToNumber(prediction.UL2_status);
-      const UL3 = statusToNumber(prediction.UL3_status);
-
-      if (UL1 === null || UL2 === null || UL3 === null) {
-        trafficImageEl.src = "25.png";
-        return;
+      function getImageNumber(r1, inter, r2) {
+        return r1 * 9 + inter * 3 + r2 + 1;
       }
 
-      const imageNumber = getImageNumber(UL1, UL2, UL3);
+      async function updateTrafficImage() {
+        try {
+          const res = await fetch(TRAFFIC_API_URL);
+          const prediction = await res.json();
 
-      // ⚠️ IMPORTANT: Always load NUMBER.png, NOT just the number
-      trafficImageEl.src = `${imageNumber}.png`;
+          if (!prediction) {
+            trafficImageEl.src = "25.png";
+            return;
+          }
 
-    } catch (err) {
-      console.error("AI fetch failed:", err);
-      trafficImageEl.src = "25.png";
-    }
-  }
+          const UL1 = statusToNumber(prediction.UL1_status);
+          const UL2 = statusToNumber(prediction.UL2_status);
+          const UL3 = statusToNumber(prediction.UL3_status);
 
-  window.addEventListener("load", () => {
-    updateTrafficImage();
-    setInterval(updateTrafficImage, 10000);
-  });
-</script>
+          if (UL1 === null || UL2 === null || UL3 === null) {
+            trafficImageEl.src = "25.png";
+            return;
+          }
 
+          const imageNumber = getImageNumber(UL1, UL2, UL3);
+
+          // Always load NUMBER.png
+          trafficImageEl.src = `${imageNumber}.png`;
+
+        } catch (err) {
+          console.error("AI fetch failed:", err);
+          trafficImageEl.src = "25.png";
+        }
+      }
+
+      window.addEventListener("load", () => {
+        updateTrafficImage();
+        setInterval(updateTrafficImage, 10000);
+      });
+    </script>
 
     <h2>Live Map</h2>
     <div id="liveMap"></div>
