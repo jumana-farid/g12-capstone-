@@ -124,60 +124,63 @@
 
     <!-- ✅ FIXED AI IMAGE LOGIC -->
     <script>
-      const TRAFFIC_API_URL = "https://fastapi-example-production-29f9.up.railway.app/predict";
-      const trafficImageEl = document.getElementById("trafficImage");
+     <script>
+  const TRAFFIC_API_URL = "https://fastapi-example-production-29f9.up.railway.app/predict";
+  const trafficImageEl = document.getElementById("trafficImage");
 
-      // Free = 0, In Use = 1, Occupied = 2
-      function statusToNumber(status) {
-        if (!status) return null;
-        status = status.toLowerCase();
+  // Free = 0, In Use = 1, Occupied = 2
+  function statusToNumber(status) {
+    if (!status) return null;
+    status = status.toLowerCase();
 
-        if (status.includes("free")) return 0;
-        if (status.includes("use")) return 1;
-        if (status.includes("occupied")) return 2;
+    if (status.includes("free")) return 0;
+    if (status.includes("use")) return 1;
+    if (status.includes("occupied")) return 2;
 
-        return null;
+    return null;
+  }
+
+  // Convert 3 states into image number (1–27)
+  function getImageNumber(r1, inter, r2) {
+    return r1 * 9 + inter * 3 + r2 + 1;
+  }
+
+  async function updateTrafficImage() {
+    try {
+      const res = await fetch(TRAFFIC_API_URL);
+      const prediction = await res.json();   // ONE object, not a list
+
+      if (!prediction) {
+        trafficImageEl.src = "25.png";
+        return;
       }
 
-      function getImageNumber(r1, inter, r2) {
-        return r1 * 9 + inter * 3 + r2 + 1;
+      const UL1 = statusToNumber(prediction.UL1_status);
+      const UL2 = statusToNumber(prediction.UL2_status);
+      const UL3 = statusToNumber(prediction.UL3_status);
+
+      if (UL1 === null || UL2 === null || UL3 === null) {
+        trafficImageEl.src = "25.png";
+        return;
       }
 
-      async function updateTrafficImage() {
-        try {
-          const res = await fetch(TRAFFIC_API_URL);
-          const predictions = await res.json();
+      const imageNumber = getImageNumber(UL1, UL2, UL3);
 
-          if (!predictions || predictions.length === 0) {
-            trafficImageEl.src = "25.png";
-            return;
-          }
+      // ⚠️ IMPORTANT: Always load NUMBER.png, NOT just the number
+      trafficImageEl.src = `${imageNumber}.png`;
 
-          const p = predictions[0];
+    } catch (err) {
+      console.error("AI fetch failed:", err);
+      trafficImageEl.src = "25.png";
+    }
+  }
 
-          const UL1 = statusToNumber(p.UL1_status);
-          const UL2 = statusToNumber(p.UL2_status);
-          const UL3 = statusToNumber(p.UL3_status);
+  window.addEventListener("load", () => {
+    updateTrafficImage();
+    setInterval(updateTrafficImage, 10000);
+  });
+</script>
 
-          if (UL1 === null || UL2 === null || UL3 === null) {
-            trafficImageEl.src = "25.png";
-            return;
-          }
-
-          const imageNumber = getImageNumber(UL1, UL2, UL3);
-          trafficImageEl.src = `${imageNumber}.png`;
-
-        } catch (err) {
-          console.error("AI fetch failed:", err);
-          trafficImageEl.src = "25.png";
-        }
-      }
-
-      window.addEventListener("load", () => {
-        updateTrafficImage();
-        setInterval(updateTrafficImage, 10000);
-      });
-    </script>
 
     <h2>Live Map</h2>
     <div id="liveMap"></div>
