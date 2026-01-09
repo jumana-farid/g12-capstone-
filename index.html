@@ -90,7 +90,7 @@
 
     <h2>AI Predictions Represented on the Map</h2>
 
-    <img id="trafficImage" src="1.png" style="max-width:100%;">
+    <img id="trafficImage" src="25.png" style="max-width:100%;">
 
     <div style="margin-top:20px;">
       <div class="legend-row">
@@ -100,12 +100,12 @@
 
       <div class="legend-row">
         <span class="circle yellow"></span>
-        <span>Currently more than 1 car but not busy</span>
+        <span>In Use</span>
       </div>
 
       <div class="legend-row">
         <span class="circle green"></span>
-        <span>Completely free</span>
+        <span>Free</span>
       </div>
     </div>
 
@@ -114,7 +114,6 @@
       IF YOU ARE IN A ROAD THAT IS ALREADY RED, PLEASE DO NOT MOVE TO ANOTHER LANE.
     </div>
 
-    <!-- LIVE READINGS BUTTON (NEW) -->
     <div style="margin-top:30px;">
       <h2>Click here to view live readings</h2>
       <button onclick="window.open('http://192.168.137.31/', '_blank')"
@@ -123,44 +122,25 @@
       </button>
     </div>
 
+    <!-- ✅ FIXED AI IMAGE LOGIC -->
     <script>
       const TRAFFIC_API_URL = "https://fastapi-example-production-29f9.up.railway.app/predict";
       const trafficImageEl = document.getElementById("trafficImage");
-      let aiCircles = [];
 
+      // Free = 0, In Use = 1, Occupied = 2
       function statusToNumber(status) {
-        if (!status) return 0;
+        if (!status) return null;
         status = status.toLowerCase();
-        if (status.includes("occupied")) return 2;
+
+        if (status.includes("free")) return 0;
         if (status.includes("use")) return 1;
-        return 0;
+        if (status.includes("occupied")) return 2;
+
+        return null;
       }
 
-      function getImageNumber(ul1, ul2, ul3) {
-        return ul1 * 9 + ul2 * 3 + ul3 + 1;
-      }
-
-      function updateAICircles(p) {
-        if (!window.liveMap) return;
-
-        aiCircles.forEach(c => liveMap.removeLayer(c));
-        aiCircles = [];
-
-        const circleData = [
-          {status: p.UL1_status, coords: [30.043, 31.237], label: "UL1"},
-          {status: p.UL2_status, coords: [30.046, 31.236], label: "UL2"},
-          {status: p.UL3_status, coords: [30.045, 31.238], label: "UL3"}
-        ];
-
-        circleData.forEach(cd => {
-          if (cd.status) {
-            const color = cd.status.toLowerCase().includes("occupied") ? "red" : "green";
-            const circle = L.circle(cd.coords, {radius:200, color: color})
-              .addTo(liveMap)
-              .bindPopup(`${cd.label}: ${cd.status}`);
-            aiCircles.push(circle);
-          }
-        });
+      function getImageNumber(r1, inter, r2) {
+        return r1 * 9 + inter * 3 + r2 + 1;
       }
 
       async function updateTrafficImage() {
@@ -169,7 +149,7 @@
           const predictions = await res.json();
 
           if (!predictions || predictions.length === 0) {
-            trafficImageEl.src = "27.png";
+            trafficImageEl.src = "25.png";
             return;
           }
 
@@ -179,14 +159,17 @@
           const UL2 = statusToNumber(p.UL2_status);
           const UL3 = statusToNumber(p.UL3_status);
 
+          if (UL1 === null || UL2 === null || UL3 === null) {
+            trafficImageEl.src = "25.png";
+            return;
+          }
+
           const imageNumber = getImageNumber(UL1, UL2, UL3);
           trafficImageEl.src = `${imageNumber}.png`;
 
-          updateAICircles(p);
-
         } catch (err) {
-          console.error("Failed to fetch AI data", err);
-          trafficImageEl.src = "27.png";
+          console.error("AI fetch failed:", err);
+          trafficImageEl.src = "25.png";
         }
       }
 
